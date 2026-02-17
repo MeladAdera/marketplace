@@ -1,0 +1,46 @@
+import express from "express";
+import dotenv from "dotenv";
+import pool from "./db/database";
+import cookieParser from "cookie-parser";
+import routes from "./routes";
+
+dotenv.config();
+
+const app = express();
+
+// Middlewares
+app.use(express.json());
+app.use(cookieParser());
+
+// Routes
+app.use(routes);
+
+// Health check (optional, keep it)
+app.get("/health", async (req, res) => {
+  try {
+    const dbResult = await pool.query("SELECT NOW() as time");
+    res.json({ 
+      ok: true, 
+      database: "connected",
+      time: dbResult.rows[0].time
+    });
+  } catch (error) {
+    console.error("Database connection error:", error);
+    res.status(500).json({ 
+      ok: false, 
+      database: "disconnected",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// Test DB connection
+pool.connect()
+  .then(() => console.log("✅ Database connection successful"))
+  .catch(err => console.error("❌ Database connection failed:", err));
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📝 Health check: http://localhost:${PORT}/health`);
+});

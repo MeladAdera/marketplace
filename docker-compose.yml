@@ -1,0 +1,45 @@
+version: '3.9'
+services:
+  db:
+    image: postgres:15
+    container_name: marketplace_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: marketplace_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - marketplace_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: marketplace_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@marketplace.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - marketplace_network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  pgadmin_data:
+
+networks:
+  marketplace_network:
+    driver: bridge
