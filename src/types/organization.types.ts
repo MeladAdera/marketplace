@@ -1,3 +1,4 @@
+// src/types/organization.types.ts
 import { UserResponse } from "./user.types";
 
 export type OrganizationStatus = 'active' | 'suspended';
@@ -7,8 +8,8 @@ export interface Organization {
   name: string;
   slug: string;
   status: OrganizationStatus;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface CreateOrganizationInput {
@@ -19,17 +20,11 @@ export interface CreateOrganizationInput {
 
 export interface UpdateOrganizationInput {
   name?: string;
+  slug?: string;      // ✅ أضفنا slug هنا
   status?: OrganizationStatus;
 }
 
-export interface OrganizationResponse {
-  id: string;
-  name: string;
-  slug: string;
-  status: OrganizationStatus;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type OrganizationResponse = Organization;
 
 export interface OrganizationWithUsers extends OrganizationResponse {
   users?: UserResponse[];
