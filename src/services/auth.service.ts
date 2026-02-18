@@ -1,50 +1,70 @@
-//src/services/auth.service.ts
+// src/services/auth.service.ts
 import bcrypt from "bcrypt";
-import { createUser, findUserByEmail } from "../repository/users.repo";
-import { createSession } from "../repository/sessions.repo";
+import { createUser, findUserByEmail, findUserById } from "../repository/users.repo";
+import { createSession, revokeAllUserSessions } from "../repository/sessions.repo";
 import { generateSessionToken, hashSessionToken } from "../utils/crypto";
+import { 
+  User, 
+  UserResponse, 
+  UserRole, 
+} from "../types/user.types";
 
 const SESSION_LIFETIME_MINUTES = 30;
 
-export type AuthUser = {
-  id: string;
-  organizationId: string | null;
-  email: string;
-  role: string;
-};
-
-export type LoginResult = {
-  user: AuthUser;
-  sessionToken: string; // raw token (stored in cookie)
+export interface LoginResult {
+  user: UserResponse;
+  sessionToken: string;
+  sessionId: string;
   expiresAt: Date;
-};
+}
+
+export interface SignupResult {
+  user: UserResponse;
+  sessionToken: string;
+  sessionId: string;
+  expiresAt: Date;
+}
+
+function mapUserToResponse(user: User): UserResponse {
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    organizationId: user.organizationId,
+    isActive: user.isActive,
+    createdAt: user.createdAt, 
+  };
+}
 
 export async function signupService(input: {
   email: string;
   password: string;
+  role?: UserRole;
+  organizationId?: string | null;
   ipAddress?: string | null;
   userAgent?: string | null;
-}) {
+}): Promise<SignupResult> {
   const email = input.email.trim().toLowerCase();
+  const role = input.role || 'customer';
 
-  // 1) Check if already exists
+  if (!['customer', 'vendor_admin', 'vendor_staff'].includes(role)) {
+    throw new Error("INVALID_ROLE");
+  }
+
   const existing = await findUserByEmail(email);
   if (existing) {
     throw new Error("EMAIL_ALREADY_EXISTS");
   }
 
-  // 2) Hash password
   const passwordHash = await bcrypt.hash(input.password, 10);
 
-  // 3) Create user (customer only)
   const user = await createUser({
     email,
     passwordHash,
-    role: "customer",
-    organizationId: null,
+    role,
+    organizationId: input.organizationId,
   });
 
-  // 4) Create session
   const sessionToken = generateSessionToken();
   const sessionTokenHash = hashSessionToken(sessionToken);
 
@@ -52,7 +72,7 @@ export async function signupService(input: {
     Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
   );
 
-  await createSession({
+  const session = await createSession({
     userId: user.id,
     sessionTokenHash,
     ipAddress: input.ipAddress ?? null,
@@ -61,16 +81,13 @@ export async function signupService(input: {
   });
 
   return {
-    user: {
-      id: user.id,
-      organizationId: user.organization_id,
-      email: user.email,
-      role: user.role,
-    },
+    user: mapUserToResponse(user),
     sessionToken,
+    sessionId: session.id,
     expiresAt,
   };
-};
+}
+
 export async function loginService(input: {
   email: string;
   password: string;
@@ -79,37 +96,30 @@ export async function loginService(input: {
 }): Promise<LoginResult> {
   const email = input.email.trim().toLowerCase();
 
-  // 1) Find user
   const user = await findUserByEmail(email);
 
-  // Important: don't reveal if email exists or not
   if (!user) {
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  // 2) Check active
-  if (!user.is_active) {
+  if (!user.isActive) {
     throw new Error("USER_DISABLED");
   }
 
-  // 3) Compare password
-  const isValidPassword = await bcrypt.compare(input.password, user.password_hash);
+  const isValidPassword = await bcrypt.compare(input.password, user.passwordHash);
 
   if (!isValidPassword) {
     throw new Error("INVALID_CREDENTIALS");
   }
 
-  // 4) Create session token (raw)
   const sessionToken = generateSessionToken();
   const sessionTokenHash = hashSessionToken(sessionToken);
 
-  // 5) expiresAt
   const expiresAt = new Date(
     Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
   );
 
-  // 6) Store session in DB
-  await createSession({
+  const session = await createSession({
     userId: user.id,
     sessionTokenHash,
     ipAddress: input.ipAddress ?? null,
@@ -117,15 +127,53 @@ export async function loginService(input: {
     expiresAt,
   });
 
-  // 7) Return safe user + token
   return {
-    user: {
-      id: user.id,
-      organizationId: user.organization_id,
-      email: user.email,
-      role: user.role,
-    },
+    user: mapUserToResponse(user),
     sessionToken,
+    sessionId: session.id,
     expiresAt,
   };
 }
+
+export async function refreshSession(input: {
+  userId: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}): Promise<LoginResult> {
+  const user = await findUserById(input.userId);
+  
+  if (!user || !user.isActive) {
+    throw new Error("USER_NOT_FOUND_OR_DISABLED");
+  }
+
+  const sessionToken = generateSessionToken();
+  const sessionTokenHash = hashSessionToken(sessionToken);
+
+  const expiresAt = new Date(
+    Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
+  );
+
+  const session = await createSession({
+    userId: user.id,
+    sessionTokenHash,
+    ipAddress: input.ipAddress ?? null,
+    userAgent: input.userAgent ?? null,
+    expiresAt,
+  });
+
+  return {
+    user: mapUserToResponse(user),
+    sessionToken,
+    sessionId: session.id,
+    expiresAt,
+  };
+}
+
+export async function validateUserSession(
+  userId: string
+): Promise<boolean> {
+  const user = await findUserById(userId);
+  return !!user && user.isActive;
+}
+
+
