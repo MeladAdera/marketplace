@@ -193,3 +193,90 @@ export async function updateUser(
   
   return mapDbUserToUser(result.rows[0]);
 }
+export async function findUsersByOrganization(
+  organizationId: string,
+  options?: { role?: string; limit?: number; offset?: number }
+): Promise<User[]> {
+  let query = `
+    SELECT
+      id,
+      organization_id,
+      email,
+      password_hash,
+      role,
+      is_active,
+      created_at,
+      updated_at
+    FROM users
+    WHERE organization_id = $1
+  `;
+  
+  const params: any[] = [organizationId];
+  let paramCounter = 2;
+
+  if (options?.role) {
+    query += ` AND role = $${paramCounter}`;
+    params.push(options.role);
+    paramCounter++;
+  }
+
+  query += ` ORDER BY created_at DESC`;
+
+  if (options?.limit) {
+    query += ` LIMIT $${paramCounter}`;
+    params.push(options.limit);
+    paramCounter++;
+  }
+
+  if (options?.offset) {
+    query += ` OFFSET $${paramCounter}`;
+    params.push(options.offset);
+  }
+
+  const result = await pool.query<User>(query, params);
+  return result.rows;
+}
+
+export async function countUsersByOrganization(
+  organizationId: string,
+  role?: string
+): Promise<number> {
+  let query = `
+    SELECT COUNT(*) as count
+    FROM users
+    WHERE organization_id = $1
+  `;
+  
+  const params: any[] = [organizationId];
+
+  if (role) {
+    query += ` AND role = $2`;
+    params.push(role);
+  }
+
+  const result = await pool.query(query, params);
+  return parseInt(result.rows[0].count);
+}
+
+export async function findUserByEmailAndOrganization(
+  email: string,
+  organizationId: string
+): Promise<User | null> {
+  const query = `
+    SELECT
+      id,
+      organization_id,
+      email,
+      password_hash,
+      role,
+      is_active,
+      created_at,
+      updated_at
+    FROM users
+    WHERE email = $1 AND organization_id = $2
+    LIMIT 1
+  `;
+
+  const result = await pool.query<User>(query, [email, organizationId]);
+  return result.rows[0] || null;
+}

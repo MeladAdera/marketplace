@@ -1,13 +1,10 @@
 // src/services/auth.service.ts
 import bcrypt from "bcrypt";
 import { createUser, findUserByEmail, findUserById } from "../repository/users.repo";
-import { createSession, revokeAllUserSessions } from "../repository/sessions.repo";
+import { createSession } from "../repository/sessions.repo";
 import { generateSessionToken, hashSessionToken } from "../utils/crypto";
-import { 
-  User, 
-  UserResponse, 
-  UserRole, 
-} from "../types/user.types";
+import { toUserResponse } from "../utils/mappers/user.mapper";
+import { UserResponse, UserRole } from "../types/user.types";
 
 const SESSION_LIFETIME_MINUTES = 30;
 
@@ -25,17 +22,6 @@ export interface SignupResult {
   expiresAt: Date;
 }
 
-function mapUserToResponse(user: User): UserResponse {
-  return {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    organizationId: user.organizationId,
-    isActive: user.isActive,
-    createdAt: user.createdAt, 
-  };
-}
-
 export async function signupService(input: {
   email: string;
   password: string;
@@ -45,9 +31,9 @@ export async function signupService(input: {
   userAgent?: string | null;
 }): Promise<SignupResult> {
   const email = input.email.trim().toLowerCase();
-  const role = input.role || 'customer';
+  const role = input.role || "customer";
 
-  if (!['customer', 'vendor_admin', 'vendor_staff'].includes(role)) {
+  if (!["customer", "vendor_admin", "vendor_staff"].includes(role)) {
     throw new Error("INVALID_ROLE");
   }
 
@@ -68,9 +54,7 @@ export async function signupService(input: {
   const sessionToken = generateSessionToken();
   const sessionTokenHash = hashSessionToken(sessionToken);
 
-  const expiresAt = new Date(
-    Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
-  );
+  const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000);
 
   const session = await createSession({
     userId: user.id,
@@ -81,7 +65,7 @@ export async function signupService(input: {
   });
 
   return {
-    user: mapUserToResponse(user),
+    user: toUserResponse(user),
     sessionToken,
     sessionId: session.id,
     expiresAt,
@@ -115,9 +99,7 @@ export async function loginService(input: {
   const sessionToken = generateSessionToken();
   const sessionTokenHash = hashSessionToken(sessionToken);
 
-  const expiresAt = new Date(
-    Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
-  );
+  const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000);
 
   const session = await createSession({
     userId: user.id,
@@ -128,7 +110,7 @@ export async function loginService(input: {
   });
 
   return {
-    user: mapUserToResponse(user),
+    user: toUserResponse(user),
     sessionToken,
     sessionId: session.id,
     expiresAt,
@@ -141,7 +123,7 @@ export async function refreshSession(input: {
   userAgent?: string | null;
 }): Promise<LoginResult> {
   const user = await findUserById(input.userId);
-  
+
   if (!user || !user.isActive) {
     throw new Error("USER_NOT_FOUND_OR_DISABLED");
   }
@@ -149,9 +131,7 @@ export async function refreshSession(input: {
   const sessionToken = generateSessionToken();
   const sessionTokenHash = hashSessionToken(sessionToken);
 
-  const expiresAt = new Date(
-    Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
-  );
+  const expiresAt = new Date(Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000);
 
   const session = await createSession({
     userId: user.id,
@@ -162,18 +142,14 @@ export async function refreshSession(input: {
   });
 
   return {
-    user: mapUserToResponse(user),
+    user: toUserResponse(user),
     sessionToken,
     sessionId: session.id,
     expiresAt,
   };
 }
 
-export async function validateUserSession(
-  userId: string
-): Promise<boolean> {
+export async function validateUserSession(userId: string): Promise<boolean> {
   const user = await findUserById(userId);
   return !!user && user.isActive;
 }
-
-

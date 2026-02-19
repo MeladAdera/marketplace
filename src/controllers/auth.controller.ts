@@ -5,6 +5,9 @@ import { clearSessionCookie, setSessionCookie } from "../utils/cookies";
 import { hashSessionToken } from "../utils/crypto";
 import { revokeSessionByTokenHash } from "../repository/sessions.repo";
 import { LoginCredentials, AuthResponse } from "../types/auth.types";
+import { refreshSession } from "../services/auth.service";
+import { findSessionByTokenHash } from "../repository/sessions.repo";
+
 
 export async function loginController(req: Request, res: Response) {
   try {
@@ -33,12 +36,13 @@ export async function loginController(req: Request, res: Response) {
     setSessionCookie(res, result.sessionToken, result.expiresAt);
 
     const response: AuthResponse = {
-      user: result.user, // ✅ الآن user كامل (isActive, createdAt موجودين)
+      user: result.user, 
       session: {
         id: result.sessionId,
         expiresAt: result.expiresAt,
       },
     };
+    //errr handlling logic 
 
     return res.status(200).json(response);
   } catch (err: any) {
@@ -159,7 +163,6 @@ export async function logoutController(req: Request, res: Response) {
   try {
     const rawToken = req.cookies?.session_token;
 
-    // دائماً نمسح الكوكي حتى لو كان التوكن مفقود
     clearSessionCookie(res);
 
     if (!rawToken) {
@@ -187,4 +190,94 @@ export async function logoutController(req: Request, res: Response) {
     });
   }
 };
+export async function refreshController(req: Request, res: Response) {
+  try {
+    const rawToken = req.cookies?.session_token;
+
+    if (!rawToken) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "NO_SESSION",
+          message: "No session token provided",
+        },
+      });
+    }
+
+    const tokenHash = hashSessionToken(rawToken);
+
+    const session = await findSessionByTokenHash(tokenHash);
+
+    if (!session) {
+      clearSessionCookie(res);
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "SESSION_NOT_FOUND",
+          message: "Session not found",
+        },
+      });
+    }
+
+    if (session.revokedAt) {
+      clearSessionCookie(res);
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "SESSION_REVOKED",
+          message: "Session revoked",
+        },
+      });
+    }
+
+    if (new Date(session.expiresAt).getTime() < Date.now()) {
+      clearSessionCookie(res);
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "SESSION_EXPIRED",
+          message: "Session expired",
+        },
+      });
+    }
+
+    const ipAddress =
+      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      req.ip ||
+      "unknown";
+
+    const userAgent = req.headers["user-agent"] ?? null;
+
+    // ✅ create new session
+    const result = await refreshSession({
+      userId: session.userId,
+      ipAddress,
+      userAgent,
+    });
+
+    // ✅ revoke old session
+    await revokeSessionByTokenHash(tokenHash);
+
+    // ✅ set new cookie
+    setSessionCookie(res, result.sessionToken, result.expiresAt);
+
+    return res.status(200).json({
+      success: true,
+      session: {
+        id: result.sessionId,
+        expiresAt: result.expiresAt,
+      },
+    });
+  } catch (err) {
+    console.error("Refresh error:", err);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Internal server error",
+      },
+    });
+  }
+}
+
 
