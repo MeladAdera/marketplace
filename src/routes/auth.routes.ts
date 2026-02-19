@@ -1,12 +1,14 @@
-// src/routes/auth.routes.ts
+// src/routes/auth.routes.ts (محدث)
+
 import { Router } from "express";
 import {
   loginController,
   signupController,
   logoutController,
-  refreshController
+  refreshController,
+  getMeController  
 } from "../controllers/auth.controller";
-import { authMiddleware, AuthRequest } from "../middlewares/auth.middleware";
+import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { 
   loginValidation, 
@@ -20,9 +22,6 @@ const router = Router();
 
 /**
  * POST /auth/login
- * - Validate: email + password
- * - Rate limiting (to be added)
- * - Controller: loginController
  */
 router.post(
   "/login", 
@@ -32,8 +31,6 @@ router.post(
 
 /**
  * POST /auth/signup
- * - Validate: email + password + role + organizationId
- * - Controller: signupController
  */
 router.post(
   "/signup", 
@@ -43,18 +40,15 @@ router.post(
 
 /**
  * POST /auth/logout
- * - Validate: session_token (optional)
- * - Controller: logoutController
  */
 router.post(
   "/logout", 
   validate(logoutValidation),  
+  logoutController  
 );
 
 /**
  * POST /auth/refresh
- * - Validate: session_token (required)
- * - Controller: refreshController
  */
 router.post(
   "/refresh", 
@@ -64,20 +58,12 @@ router.post(
 
 /**
  * GET /auth/me
- * - Validate: session_token (required)
- * - Middleware: authMiddleware (gets user from session)
- * - Returns: user info
  */
 router.get(
   "/me", 
   validate(getMeValidation),
   authMiddleware, 
-  (req: AuthRequest, res) => { 
-    res.json({ 
-      success: true,
-      data: { user: req.user }  
-    });
-  }
+  getMeController  
 );
 
 export default router;

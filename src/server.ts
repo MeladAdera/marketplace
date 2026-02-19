@@ -1,21 +1,30 @@
+// src/server.ts 
+
 import express from "express";
 import dotenv from "dotenv";
 import pool from "./db/database";
 import cookieParser from "cookie-parser";
+import helmet from "helmet"; 
+import cors from "cors"; 
 import routes from "./routes";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.middleware"; 
 
 dotenv.config();
 
 const app = express();
 
-// Middlewares
+app.use(helmet()); 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true 
+}));
 app.use(express.json());
 app.use(cookieParser());
 
-// Routes
-app.use(routes);
+// ✅ Routes
+app.use( routes); 
 
-// Health check (optional, keep it)
+// ✅ Health check
 app.get("/health", async (req, res) => {
   try {
     const dbResult = await pool.query("SELECT NOW() as time");
@@ -34,6 +43,10 @@ app.get("/health", async (req, res) => {
   }
 });
 
+app.use(notFoundHandler);
+
+app.use(errorHandler);
+
 // Test DB connection
 pool.connect()
   .then(() => console.log("✅ Database connection successful"))
@@ -43,4 +56,5 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📝 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 API: http://localhost:${PORT}/api`);
 });

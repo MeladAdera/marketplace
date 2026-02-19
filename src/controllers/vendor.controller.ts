@@ -1,4 +1,7 @@
-// src/controllers/vendor.controller.ts
+// ==========================================
+// src/controllers/vendor.controller.ts (محدث)
+// ==========================================
+
 import { Request, Response } from "express";
 import { 
   registerVendorService,
@@ -12,289 +15,155 @@ import {
   VendorProductFilters 
 } from "../types/vendor.types";
 import { AuthRequest } from "../middlewares/auth.middleware";
+import { asyncHandler } from "../middlewares/errorHandler.middleware";
+import {
+  UnauthorizedError,
+  ForbiddenError,
+  NoOrganizationError,
+  OrganizationNotFoundError,
+  AdminNotFoundError,
+  UserAlreadyInOrganizationError,
+  EmailAlreadyRegisteredError,
+  SlugAlreadyExistsError,
+  EmailAlreadyExistsError
+} from "../errors";
 
-// 1️⃣ تسجيل شركة جديدة
-export async function registerVendorController(req: Request, res: Response) {
-  try {
-    const { companyName, companySlug, adminEmail, adminPassword } = req.body;
-    // ✅ Zod already validated all fields
+/**
+ * 1️⃣ POST /vendors/register - تسجيل شركة جديدة
+ */
+export const registerVendorController = asyncHandler(async (req: Request, res: Response) => {
+  const { companyName, companySlug, adminEmail, adminPassword } = req.body;
+  // ✅ Zod already validated all fields
 
-    const ipAddress =
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
-      req.ip ||
-      "unknown";
+  const ipAddress =
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+    req.ip ||
+    "unknown";
 
-    const userAgent = req.headers["user-agent"] ?? null;
+  const userAgent = req.headers["user-agent"] ?? null;
 
-    const input: RegisterVendorInput = {
-      companyName,
-      companySlug,
-      adminEmail: adminEmail.toLowerCase().trim(),
-      adminPassword,
-      ipAddress,
-      userAgent
-    };
+  const input: RegisterVendorInput = {
+    companyName,
+    companySlug,
+    adminEmail: adminEmail.toLowerCase().trim(),
+    adminPassword,
+    ipAddress,
+    userAgent
+  };
 
-    const result = await registerVendorService(input);
+  const result = await registerVendorService(input);
 
-    const { setSessionCookie } = require("../utils/cookies");
-    setSessionCookie(res, result.sessionToken, result.session.expiresAt);
+  const { setSessionCookie } = require("../utils/cookies");
+  setSessionCookie(res, result.sessionToken, result.session.expiresAt);
 
-    return res.status(201).json({
-      success: true,
-      data: {
-        user: result.user,
-        organization: result.organization
-      }
-    });
-
-  } catch (err: any) {
-    if (err.message === "EMAIL_ALREADY_EXISTS") {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: "EMAIL_ALREADY_EXISTS",
-          message: "Email already registered"
-        }
-      });
+  return res.status(201).json({
+    success: true,
+    data: {
+      user: result.user,
+      organization: result.organization
     }
+  });
+});
 
-    if (err.message === "SLUG_ALREADY_EXISTS") {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: "SLUG_ALREADY_EXISTS",
-          message: "Company slug already taken"
-        }
-      });
-    }
-
-    console.error("Vendor registration error:", err);
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Internal server error"
-      }
-    });
+/**
+ * 2️⃣ GET /vendors/me - جلب ملف الشركة
+ */
+export const getVendorProfileController = asyncHandler(async (req: AuthRequest, res: Response) => {
+  // ✅ تحقق من وجود المستخدم
+  if (!req.user) {
+    throw new UnauthorizedError();
   }
-}
 
-// 2️⃣ جلب ملف الشركة
-export async function getVendorProfileController(req: AuthRequest, res: Response) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated"
-        }
-      });
-    }
-
-    if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "Insufficient permissions"
-        }
-      });
-    }
-
-    if (!req.user.organization_id) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NO_ORGANIZATION",
-          message: "User does not belong to any organization"
-        }
-      });
-    }
-
-    const profile = await getVendorProfileService(req.user.organization_id);
-
-    return res.status(200).json({
-      success: true,
-      data: profile
-    });
-
-  } catch (err: any) {
-    if (err.message === "ORGANIZATION_NOT_FOUND") {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "ORGANIZATION_NOT_FOUND",
-          message: "Organization not found"
-        }
-      });
-    }
-
-    if (err.message === "ADMIN_NOT_FOUND") {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "ADMIN_NOT_FOUND",
-          message: "Admin not found"
-        }
-      });
-    }
-
-    console.error("Get vendor profile error:", err);
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Internal server error"
-      }
-    });
+  // ✅ تحقق من الصلاحيات
+  if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
+    throw new ForbiddenError('Insufficient permissions');
   }
-}
 
-// 3️⃣ دعوة موظف جديد
-export async function inviteStaffController(req: AuthRequest, res: Response) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated"
-        }
-      });
-    }
-
-    // فقط vendor_admin يمكنه دعوة موظفين
-    if (req.user.role !== 'vendor_admin') {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "Only vendor admin can invite staff"
-        }
-      });
-    }
-
-    if (!req.user.organization_id) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NO_ORGANIZATION",
-          message: "User does not belong to any organization"
-        }
-      });
-    }
-
-    const { email, role } = req.body;
-    // ✅ Zod already validated email format and role
-
-    const input: InviteStaffInput = {
-      email: email.toLowerCase().trim(),
-      role
-    };
-
-    const result = await inviteStaffService(
-      req.user.organization_id,
-      input,
-      req.user.id
-    );
-
-    return res.status(201).json({
-      success: true,
-      data: result
-    });
-
-  } catch (err: any) {
-    if (err.message === "USER_ALREADY_IN_ORGANIZATION") {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: "USER_ALREADY_IN_ORGANIZATION",
-          message: "User already exists in this organization"
-        }
-      });
-    }
-
-    if (err.message === "EMAIL_ALREADY_REGISTERED") {
-      return res.status(409).json({
-        success: false,
-        error: {
-          code: "EMAIL_ALREADY_REGISTERED",
-          message: "Email already registered in another organization"
-        }
-      });
-    }
-
-    console.error("Invite staff error:", err);
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Internal server error"
-      }
-    });
+  // ✅ تحقق من وجود منشأة
+  if (!req.user.organization_id) {
+    throw new NoOrganizationError();
   }
-}
 
-// 4️⃣ جلب منتجات البائع
-export async function getVendorProductsController(req: AuthRequest, res: Response) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "UNAUTHORIZED",
-          message: "Not authenticated"
-        }
-      });
-    }
+  const profile = await getVendorProfileService(req.user.organization_id);
 
-    if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "Insufficient permissions"
-        }
-      });
-    }
+  return res.status(200).json({
+    success: true,
+    data: profile
+  });
+});
 
-    if (!req.user.organization_id) {
-      return res.status(404).json({
-        success: false,
-        error: {
-          code: "NO_ORGANIZATION",
-          message: "User does not belong to any organization"
-        }
-      });
-    }
-
-    const { page, limit, active, search } = req.query;
-    // ✅ Zod already validated and transformed these values
-
-    const filters: VendorProductFilters = {
-      page: page ? Number(page) : 1,      // Zod already transformed to number
-      limit: limit ? Number(limit) : 10,  // Zod already transformed to number
-      active: active === 'true' ? true : active === 'false' ? false : undefined,
-      search: search as string
-    };
-
-    const result = await getVendorProductsService(req.user.organization_id, filters);
-
-    return res.status(200).json({
-      success: true,
-      data: result
-    });
-
-  } catch (err) {
-    console.error("Get vendor products error:", err);
-    return res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Internal server error"
-      }
-    });
+/**
+ * 3️⃣ POST /vendors/users/invite - دعوة موظف جديد
+ */
+export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: Response) => {
+  // ✅ تحقق من وجود المستخدم
+  if (!req.user) {
+    throw new UnauthorizedError();
   }
-}
+
+  // ✅ فقط vendor_admin يمكنه دعوة موظفين
+  if (req.user.role !== 'vendor_admin') {
+    throw new ForbiddenError('Only vendor admin can invite staff');
+  }
+
+  // ✅ تحقق من وجود منشأة
+  if (!req.user.organization_id) {
+    throw new NoOrganizationError();
+  }
+
+  const { email, role } = req.body;
+  // ✅ Zod already validated email format and role
+
+  const input: InviteStaffInput = {
+    email: email.toLowerCase().trim(),
+    role
+  };
+
+  const result = await inviteStaffService(
+    req.user.organization_id,
+    input,
+    req.user.id
+  );
+
+  return res.status(201).json({
+    success: true,
+    data: result
+  });
+});
+
+/**
+ * 4️⃣ GET /vendors/products - جلب منتجات البائع
+ */
+export const getVendorProductsController = asyncHandler(async (req: AuthRequest, res: Response) => {
+  // ✅ تحقق من وجود المستخدم
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+
+  // ✅ تحقق من الصلاحيات
+  if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
+    throw new ForbiddenError('Insufficient permissions');
+  }
+
+  // ✅ تحقق من وجود منشأة
+  if (!req.user.organization_id) {
+    throw new NoOrganizationError();
+  }
+
+  const { page, limit, active, search } = req.query;
+  // ✅ Zod already validated and transformed these values
+
+  const filters: VendorProductFilters = {
+    page: page ? Number(page) : 1,
+    limit: limit ? Number(limit) : 10,
+    active: active === 'true' ? true : active === 'false' ? false : undefined,
+    search: search as string
+  };
+
+  const result = await getVendorProductsService(req.user.organization_id, filters);
+
+  return res.status(200).json({
+    success: true,
+    data: result
+  });
+});

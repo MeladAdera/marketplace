@@ -1,7 +1,7 @@
 ============================================================
 📁 MARKETPLACE-BACKEND STRUCTURE
 ============================================================
-Generated: 2/19/2026, 10:17:56 AM
+Generated: 2/19/2026, 4:23:26 PM
 Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 
@@ -12,12 +12,15 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 src/
 ├── 📁 config/
 ├── 📁 controllers/
-│   ├── 📄 auth.controller.ts (6.73 KB)
-│   └── 📄 vendor.controller.ts (8.94 KB)
+│   ├── 📄 auth.controller.ts (6.92 KB)
+│   ├── 📄 product.controller.ts (0 B)
+│   └── 📄 vendor.controller.ts (7.37 KB)
 ├── 📁 db/
 │   └── 📄 database.ts (634 B)
 ├── 📁 middlewares/
-│   └── 📄 auth.middleware.ts (2.04 KB)
+│   ├── 📄 auth.middleware.ts (2.04 KB)
+│   ├── 📄 rateLimit.middleware.ts (1.57 KB)
+│   └── 📄 validate.middleware.ts (1.26 KB)
 ├── 📁 migrations/
 │   ├── 📄 001_create_organizations_table.sql (939 B)
 │   ├── 📄 002_create_users_table.sql (967 B)
@@ -35,9 +38,9 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 sessions.repo.ts (3.6 KB)
 │   └── 📄 users.repo.ts (5.59 KB)
 ├── 📁 routes/
-│   ├── 📄 auth.routes.ts (573 B)
+│   ├── 📄 auth.routes.ts (1.57 KB)
 │   ├── 📄 index.ts (284 B)
-│   └── 📄 vendor.routes.ts (1.12 KB)
+│   └── 📄 vendor.routes.ts (1.07 KB)
 ├── 📁 services/
 │   ├── 📄 auth.service.ts (3.78 KB)
 │   └── 📄 vendor.service.ts (7.17 KB)
@@ -58,18 +61,24 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 cookies.ts (505 B)
 │   ├── 📄 crypto.ts (304 B)
 │   └── 📄 migrate.ts (2.72 KB)
+├── 📁 validations/
+│   ├── 📄 auth.validation.ts (2.57 KB)
+│   ├── 📄 common.validation.ts (4.1 KB)
+│   ├── 📄 index.ts (272 B)
+│   ├── 📄 product.validation.ts (3.92 KB)
+│   └── 📄 vendor.validation.ts (3 KB)
 └── 📄 server.ts (1.13 KB)
 ├── 📄 .env (322 B)
 ├── 📄 .gitignore (254 B)
 ├── 📄 docker-compose.yml (955 B)
 ├── 📄 g.js (4.37 KB)
-├── 📄 package-lock.json (82 KB)
+├── 📄 package-lock.json (82.01 KB)
 ├── 📄 package.json (1.2 KB)
 └── 📄 tsconfig.json (176 B)
 
 ============================================================
 📊 SUMMARY
 ============================================================
-Total Directories: 14
-Total Files: 45
+Total Directories: 15
+Total Files: 53
 ============================================================
