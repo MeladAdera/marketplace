@@ -7,25 +7,25 @@ import {
   getVendorProductsController
 } from "../controllers/vendor.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
+import { validate } from "../middlewares/validate.middleware";
+import { 
+  registerVendorValidation,
+  inviteStaffValidation,
+  getVendorProductsValidation 
+} from "../validations";
 
 const router = Router();
 
-// المسارات العامة (لا تحتاج مصادقة)
-router.post("/register", registerVendorController);
+router.post("/register", validate(registerVendorValidation), registerVendorController);
 
-// جميع المسارات التالية تحتاج مصادقة
 router.use(authMiddleware);
 
-// ملف الشركة
 router.get("/me", getVendorProfileController);
-// router.patch("/me", updateVendorProfileController); // للتحديث لاحقاً
 
-// إدارة الموظفين
-router.post("/users/invite", inviteStaffController);
-router.get("/users", getVendorProfileController); // نفس /me يعطي الموظفين
+router.post("/users/invite", validate(inviteStaffValidation), inviteStaffController);
+router.get("/users", getVendorProfileController); 
 
-// إدارة المنتجات
-router.get("/products", getVendorProductsController);
+router.get("/products", validate(getVendorProductsValidation), getVendorProductsController);;
 // router.post("/products", createProductController);
 // router.patch("/products/:id", updateProductController);
 // router.delete("/products/:id", deleteProductController);

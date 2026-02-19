@@ -4,20 +4,19 @@ import { loginService, signupService } from "./../services/auth.service";
 import { clearSessionCookie, setSessionCookie } from "../utils/cookies";
 import { hashSessionToken } from "../utils/crypto";
 import { revokeSessionByTokenHash } from "../repository/sessions.repo";
-import { LoginCredentials, AuthResponse } from "../types/auth.types";
+import {  AuthResponse } from "../types/auth.types";
 import { refreshSession } from "../services/auth.service";
 import { findSessionByTokenHash } from "../repository/sessions.repo";
+import { AuthRequest } from "../middlewares/auth.middleware"; 
 
-
+/**
+ * POST /auth/login
+ * ✅ Validation: loginValidation
+ * ✅ Rate limiting: loginLimiter
+ */
 export async function loginController(req: Request, res: Response) {
   try {
-    const { email, password } = req.body as LoginCredentials;
-
-    if (!email || !password) {
-      return res.status(400).json({ 
-        message: "Email and password are required" 
-      });
-    }
+    const { email, password } = req.body; 
 
     const ipAddress =
       (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
@@ -42,7 +41,6 @@ export async function loginController(req: Request, res: Response) {
         expiresAt: result.expiresAt,
       },
     };
-    //errr handlling logic 
 
     return res.status(200).json(response);
   } catch (err: any) {
@@ -75,31 +73,16 @@ export async function loginController(req: Request, res: Response) {
       }
     });
   }
-};
+}
 
+/**
+ * POST /auth/signup
+ * ✅ Validation: signupValidation
+ * ✅ Rate limiting: signupLimiter
+ */
 export async function signupController(req: Request, res: Response) {
   try {
-    const { email, password, role = 'customer', organizationId = null } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ 
-        success: false,
-        error: {
-          code: "MISSING_FIELDS",
-          message: "Email and password are required"
-        }
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ 
-        success: false,
-        error: {
-          code: "INVALID_PASSWORD",
-          message: "Password must be at least 6 characters"
-        }
-      });
-    }
+    const { email, password, role, organizationId } = req.body; 
 
     const ipAddress =
       (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
@@ -120,7 +103,7 @@ export async function signupController(req: Request, res: Response) {
     setSessionCookie(res, result.sessionToken, result.expiresAt);
 
     const response: AuthResponse = {
-      user: result.user, // ✅ الآن user كامل
+      user: result.user,
       session: {
         id: result.sessionId,
         expiresAt: result.expiresAt,
@@ -158,7 +141,12 @@ export async function signupController(req: Request, res: Response) {
       }
     });
   }
-};
+}
+
+/**
+ * POST /auth/logout
+ * ✅ Validation: logoutValidation 
+ */
 export async function logoutController(req: Request, res: Response) {
   try {
     const rawToken = req.cookies?.session_token;
@@ -189,22 +177,17 @@ export async function logoutController(req: Request, res: Response) {
       }
     });
   }
-};
+}
+
+/**
+ * POST /auth/refresh
+ * ✅ Validation: refreshValidation
+ */
 export async function refreshController(req: Request, res: Response) {
   try {
-    const rawToken = req.cookies?.session_token;
+    const rawToken = req.cookies?.session_token; 
 
-    if (!rawToken) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: "NO_SESSION",
-          message: "No session token provided",
-        },
-      });
-    }
-
-    const tokenHash = hashSessionToken(rawToken);
+    const tokenHash = hashSessionToken(rawToken!);
 
     const session = await findSessionByTokenHash(tokenHash);
 
@@ -248,17 +231,14 @@ export async function refreshController(req: Request, res: Response) {
 
     const userAgent = req.headers["user-agent"] ?? null;
 
-    // ✅ create new session
     const result = await refreshSession({
       userId: session.userId,
       ipAddress,
       userAgent,
     });
 
-    // ✅ revoke old session
     await revokeSessionByTokenHash(tokenHash);
 
-    // ✅ set new cookie
     setSessionCookie(res, result.sessionToken, result.expiresAt);
 
     return res.status(200).json({
@@ -280,4 +260,40 @@ export async function refreshController(req: Request, res: Response) {
   }
 }
 
+/**
+ * GET /auth/me
+ * ✅ Validation: getMeValidation
+ * ✅ Middleware: authMiddleware
+ */
+export async function getMeController(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "UNAUTHORIZED",
+          message: "Not authenticated"
+        }
+      });
+    }
 
+  
+    const { password_hash, ...userWithoutPassword } = req.user as any;
+    
+    return res.status(200).json({
+      success: true,
+      data: {
+        user: userWithoutPassword
+      }
+    });
+  } catch (err) {
+    console.error("Get me error:", err);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Internal server error"
+      }
+    });
+  }
+}

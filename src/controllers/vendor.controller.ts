@@ -17,48 +17,7 @@ import { AuthRequest } from "../middlewares/auth.middleware";
 export async function registerVendorController(req: Request, res: Response) {
   try {
     const { companyName, companySlug, adminEmail, adminPassword } = req.body;
-
-    if (!companyName || !companySlug || !adminEmail || !adminPassword) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "MISSING_FIELDS",
-          message: "Company name, slug, email and password are required"
-        }
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(adminEmail)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_EMAIL",
-          message: "Invalid email format"
-        }
-      });
-    }
-
-    if (adminPassword.length < 6) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "WEAK_PASSWORD",
-          message: "Password must be at least 6 characters"
-        }
-      });
-    }
-
-    const slugRegex = /^[a-z0-9-]+$/;
-    if (!slugRegex.test(companySlug)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_SLUG",
-          message: "Slug must contain only lowercase letters, numbers, and hyphens"
-        }
-      });
-    }
+    // ✅ Zod already validated all fields
 
     const ipAddress =
       (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
@@ -228,37 +187,7 @@ export async function inviteStaffController(req: AuthRequest, res: Response) {
     }
 
     const { email, role } = req.body;
-
-    if (!email || !role) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "MISSING_FIELDS",
-          message: "Email and role are required"
-        }
-      });
-    }
-
-    if (!['vendor_staff', 'vendor_admin'].includes(role)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_ROLE",
-          message: "Role must be vendor_staff or vendor_admin"
-        }
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "INVALID_EMAIL",
-          message: "Invalid email format"
-        }
-      });
-    }
+    // ✅ Zod already validated email format and role
 
     const input: InviteStaffInput = {
       email: email.toLowerCase().trim(),
@@ -342,10 +271,11 @@ export async function getVendorProductsController(req: AuthRequest, res: Respons
     }
 
     const { page, limit, active, search } = req.query;
+    // ✅ Zod already validated and transformed these values
 
     const filters: VendorProductFilters = {
-      page: page ? parseInt(page as string) : 1,
-      limit: limit ? parseInt(limit as string) : 10,
+      page: page ? Number(page) : 1,      // Zod already transformed to number
+      limit: limit ? Number(limit) : 10,  // Zod already transformed to number
       active: active === 'true' ? true : active === 'false' ? false : undefined,
       search: search as string
     };
