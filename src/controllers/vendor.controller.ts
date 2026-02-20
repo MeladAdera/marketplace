@@ -7,12 +7,14 @@ import {
   registerVendorService,
   getVendorProfileService,
   inviteStaffService,
-  getVendorProductsService
+  getVendorProductsService,
+  updateVendorProfileService
 } from "../services/vendor.service";
 import { 
   RegisterVendorInput, 
   InviteStaffInput,
-  VendorProductFilters 
+  VendorProductFilters, 
+  UpdateVendorInput
 } from "../types/vendor.types";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { asyncHandler } from "../middlewares/errorHandler.middleware";
@@ -131,6 +133,7 @@ export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: 
   });
 });
 
+
 /**
  * 4️⃣ GET /vendors/products - جلب منتجات البائع
  */
@@ -166,4 +169,43 @@ export const getVendorProductsController = asyncHandler(async (req: AuthRequest,
     success: true,
     data: result
   });
+  
 });
+ 
+export const updateVendorProfileController = asyncHandler(async (req: AuthRequest, res: Response) => {
+  // ✅ تحقق من وجود المستخدم
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+
+  // ✅ فقط vendor_admin يمكنه تحديث الملف
+  if (req.user.role !== 'vendor_admin') {
+    throw new ForbiddenError('Only vendor admin can update company profile');
+  }
+
+  // ✅ تحقق من وجود منشأة
+  if (!req.user.organization_id) {
+    throw new NoOrganizationError();
+  }
+
+  const { name, status } = req.body;
+  // ✅ Zod already validated
+
+  const input: UpdateVendorInput = {
+    name,
+    status
+  };
+
+  const updatedOrg = await updateVendorProfileService(
+    req.user.organization_id,
+    input,
+    req.user.id
+  );
+
+  return res.status(200).json({
+    success: true,
+    data: {
+      organization: updatedOrg
+    }
+  });
+})

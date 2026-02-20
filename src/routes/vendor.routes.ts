@@ -5,14 +5,16 @@ import {
   registerVendorController,
   getVendorProfileController,
   inviteStaffController,
-  getVendorProductsController
+  getVendorProductsController,
+  updateVendorProfileController
 } from "../controllers/vendor.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { 
   registerVendorValidation,
   inviteStaffValidation,
-  getVendorProductsValidation 
+  getVendorProductsValidation, 
+  updateVendorValidation
 } from "../validations";
 
 const router = Router();
@@ -31,6 +33,8 @@ router.post("/users/invite", validate(inviteStaffValidation), inviteStaffControl
 
 // vendor products
 router.get("/products", validate(getVendorProductsValidation), getVendorProductsController);
+router.patch("/me", validate(updateVendorValidation), updateVendorProfileController);  
+
 
 // router.post("/products", createProductController);
 // router.patch("/products/:id", updateProductController);

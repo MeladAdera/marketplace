@@ -1,7 +1,7 @@
 ============================================================
 📁 MARKETPLACE-BACKEND STRUCTURE
 ============================================================
-Generated: 2/19/2026, 4:23:26 PM
+Generated: 2/20/2026, 9:41:19 PM
 Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 
@@ -12,13 +12,21 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 src/
 ├── 📁 config/
 ├── 📁 controllers/
-│   ├── 📄 auth.controller.ts (6.92 KB)
+│   ├── 📄 auth.controller.ts (4.49 KB)
 │   ├── 📄 product.controller.ts (0 B)
-│   └── 📄 vendor.controller.ts (7.37 KB)
+│   └── 📄 vendor.controller.ts (5.4 KB)
 ├── 📁 db/
 │   └── 📄 database.ts (634 B)
+├── 📁 errors/
+│   ├── 📄 AppError.ts (1.21 KB)
+│   ├── 📄 auth.errors.ts (2.31 KB)
+│   ├── 📄 database.errors.ts (1.74 KB)
+│   ├── 📄 index.ts (840 B)
+│   ├── 📄 product.errors.ts (1.88 KB)
+│   └── 📄 vendor.errors.ts (1.99 KB)
 ├── 📁 middlewares/
 │   ├── 📄 auth.middleware.ts (2.04 KB)
+│   ├── 📄 errorHandler.middleware.ts (4.21 KB)
 │   ├── 📄 rateLimit.middleware.ts (1.57 KB)
 │   └── 📄 validate.middleware.ts (1.26 KB)
 ├── 📁 migrations/
@@ -33,17 +41,18 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   └── 📄 009_create_audit_logs_table.sql (898 B)
 ├── 📁 modules/
 ├── 📁 repository/
+│   ├── 📄 audit.repo.ts (5.76 KB)
 │   ├── 📄 organization.repo.ts (2.57 KB)
 │   ├── 📄 products.repo.ts (3.22 KB)
 │   ├── 📄 sessions.repo.ts (3.6 KB)
 │   └── 📄 users.repo.ts (5.59 KB)
 ├── 📁 routes/
-│   ├── 📄 auth.routes.ts (1.57 KB)
+│   ├── 📄 auth.routes.ts (1.08 KB)
 │   ├── 📄 index.ts (284 B)
-│   └── 📄 vendor.routes.ts (1.07 KB)
+│   └── 📄 vendor.routes.ts (1.27 KB)
 ├── 📁 services/
 │   ├── 📄 auth.service.ts (3.78 KB)
-│   └── 📄 vendor.service.ts (7.17 KB)
+│   └── 📄 vendor.service.ts (8.94 KB)
 ├── 📁 types/
 │   ├── 📄 audit.types.ts (1.23 KB)
 │   ├── 📄 auth.types.ts (802 B)
@@ -67,7 +76,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 index.ts (272 B)
 │   ├── 📄 product.validation.ts (3.92 KB)
 │   └── 📄 vendor.validation.ts (3 KB)
-└── 📄 server.ts (1.13 KB)
+└── 📄 server.ts (1.5 KB)
 ├── 📄 .env (322 B)
 ├── 📄 .gitignore (254 B)
 ├── 📄 docker-compose.yml (955 B)
@@ -79,6 +88,6 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 📊 SUMMARY
 ============================================================
-Total Directories: 15
-Total Files: 53
+Total Directories: 16
+Total Files: 61
 ============================================================

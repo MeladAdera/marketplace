@@ -1,39 +1,54 @@
 // src/services/vendor.service.ts
 import bcrypt from "bcrypt";
 import pool from "../db/database";
-import { createOrganization, findOrganizationBySlug, findOrganizationById } from "../repository/organization.repo";
-import { 
-  createUser, 
-  findUserByEmail, 
-  findUsersByOrganization, 
+import {
+  createOrganization,
+  findOrganizationBySlug,
+  findOrganizationById,
+  updateOrganization,
+} from "../repository/organization.repo";
+import {
+  createUser,
+  findUserByEmail,
+  findUsersByOrganization,
   countUsersByOrganization,
-  findUserByEmailAndOrganization 
+  findUserByEmailAndOrganization,
 } from "../repository/users.repo";
 import { createSession } from "../repository/sessions.repo";
 import { generateSessionToken, hashSessionToken } from "../utils/crypto";
-import { 
-  RegisterVendorInput, 
+import {
+  RegisterVendorInput,
   RegisterVendorResponse,
   VendorProfileResponse,
   InviteStaffInput,
   InviteStaffResponse,
-  VendorProductFilters 
+  VendorProductFilters,
+  UpdateVendorInput,
 } from "../types/vendor.types";
 import { UserRole } from "../types/user.types";
-import { 
-  findProductsByOrganization, 
+import {
+  findProductsByOrganization,
   countProductsByOrganization,
-  findVariantsByProductId 
+  findVariantsByProductId,
 } from "../repository/products.repo";
+import { createAuditLog } from "../repository/audit.repo";
+import { Organization } from "../types/organization.types";
 
 const SESSION_LIFETIME_MINUTES = 30;
 
 // 1️⃣ تسجيل شركة جديدة
 export async function registerVendorService(
-  input: RegisterVendorInput
+  input: RegisterVendorInput,
 ): Promise<RegisterVendorResponse> {
-  const { companyName, companySlug, adminEmail, adminPassword, ipAddress, userAgent } = input;
-  
+  const {
+    companyName,
+    companySlug,
+    adminEmail,
+    adminPassword,
+    ipAddress,
+    userAgent,
+  } = input;
+
   const existingUser = await findUserByEmail(adminEmail);
   if (existingUser) {
     throw new Error("EMAIL_ALREADY_EXISTS");
@@ -45,14 +60,14 @@ export async function registerVendorService(
   }
 
   const client = await pool.connect();
-  
+
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     const organization = await createOrganization({
       name: companyName,
       slug: companySlug,
-      status: 'active'
+      status: "active",
     });
 
     const passwordHash = await bcrypt.hash(adminPassword, 10);
@@ -60,15 +75,15 @@ export async function registerVendorService(
     const user = await createUser({
       email: adminEmail,
       passwordHash,
-      role: 'vendor_admin' as UserRole,
-      organizationId: organization.id
+      role: "vendor_admin" as UserRole,
+      organizationId: organization.id,
     });
 
     const sessionToken = generateSessionToken();
     const sessionTokenHash = hashSessionToken(sessionToken);
 
     const expiresAt = new Date(
-      Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000
+      Date.now() + SESSION_LIFETIME_MINUTES * 60 * 1000,
     );
 
     const session = await createSession({
@@ -79,7 +94,20 @@ export async function registerVendorService(
       expiresAt,
     });
 
-    await client.query('COMMIT');
+    await createAuditLog({
+      actorUserId: user.id,
+      organizationId: organization.id,
+      action: "VENDOR_REGISTERED",
+      entityType: "organization",
+      entityId: organization.id,
+      metadata: {
+        companyName: input.companyName,
+        companySlug: input.companySlug,
+        adminEmail: input.adminEmail,
+      },
+    });
+
+    await client.query("COMMIT");
 
     return {
       user: {
@@ -88,7 +116,7 @@ export async function registerVendorService(
         role: user.role,
         organizationId: user.organizationId,
         isActive: user.isActive,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       },
       organization: {
         id: organization.id,
@@ -96,17 +124,16 @@ export async function registerVendorService(
         slug: organization.slug,
         status: organization.status,
         created_at: organization.created_at,
-        updated_at: organization.updated_at
+        updated_at: organization.updated_at,
       },
       session: {
         id: session.id,
-        expiresAt: session.expiresAt
+        expiresAt: session.expiresAt,
       },
-      sessionToken: sessionToken
+      sessionToken: sessionToken,
     };
-
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
@@ -115,7 +142,7 @@ export async function registerVendorService(
 
 // 2️⃣ جلب ملف الشركة
 export async function getVendorProfileService(
-  organizationId: string
+  organizationId: string,
 ): Promise<VendorProfileResponse> {
   // جلب المنظمة
   const organization = await findOrganizationById(organizationId);
@@ -124,7 +151,10 @@ export async function getVendorProfileService(
   }
 
   // جلب الأدمن (أول مستخدم في المنظمة)
-  const admins = await findUsersByOrganization(organizationId, { role: 'vendor_admin', limit: 1 });
+  const admins = await findUsersByOrganization(organizationId, {
+    role: "vendor_admin",
+    limit: 1,
+  });
   if (admins.length === 0) {
     throw new Error("ADMIN_NOT_FOUND");
   }
@@ -134,8 +164,10 @@ export async function getVendorProfileService(
   const staff = await findUsersByOrganization(organizationId);
 
   // جلب إحصائيات المنتجات
-  const totalProducts = await countProductsByOrganization(organizationId, { active: true });
-  
+  const totalProducts = await countProductsByOrganization(organizationId, {
+    active: true,
+  });
+
   // جلب إحصائيات الموظفين
   const totalStaff = await countUsersByOrganization(organizationId);
 
@@ -151,7 +183,7 @@ export async function getVendorProfileService(
       slug: organization.slug,
       status: organization.status,
       created_at: organization.created_at,
-      updated_at: organization.updated_at
+      updated_at: organization.updated_at,
     },
     admin: {
       id: admin.id,
@@ -159,23 +191,23 @@ export async function getVendorProfileService(
       role: admin.role,
       organizationId: admin.organizationId,
       isActive: admin.isActive,
-      createdAt: admin.createdAt
+      createdAt: admin.createdAt,
     },
-    staff: staff.map(user => ({
+    staff: staff.map((user) => ({
       id: user.id,
       email: user.email,
       role: user.role,
       organizationId: user.organizationId,
       isActive: user.isActive,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     })),
     stats: {
       totalProducts,
       totalStaff,
       totalOrders,
       totalRevenue,
-      pendingOrders
-    }
+      pendingOrders,
+    },
   };
 }
 
@@ -183,12 +215,15 @@ export async function getVendorProfileService(
 export async function inviteStaffService(
   organizationId: string,
   input: InviteStaffInput,
-  invitedBy: string
+  invitedBy: string,
 ): Promise<InviteStaffResponse> {
   const { email, role } = input;
 
   // التحقق من أن الإيميل غير مستخدم في هذه المنظمة
-  const existingUser = await findUserByEmailAndOrganization(email, organizationId);
+  const existingUser = await findUserByEmailAndOrganization(
+    email,
+    organizationId,
+  );
   if (existingUser) {
     throw new Error("USER_ALREADY_IN_ORGANIZATION");
   }
@@ -208,8 +243,19 @@ export async function inviteStaffService(
     email,
     passwordHash,
     role: role as UserRole,
-    organizationId
+    organizationId,
   });
+  await createAuditLog({
+  actorUserId: invitedBy,
+  organizationId,
+  action: 'STAFF_INVITED',
+  entityType: 'user',
+  entityId: user.id,
+  newValues: {
+    email: user.email,
+    role: user.role
+  }
+});
 
   // TODO: إرسال إيميل الدعوة مع كلمة المرور المؤقتة
   console.log(`Invitation sent to ${email} with password: ${tempPassword}`);
@@ -218,15 +264,53 @@ export async function inviteStaffService(
     id: user.id,
     email: user.email,
     role: user.role,
-    status: 'pending', // افتراضي، لاحقاً نغير بعد أول تسجيل دخول
-    invitedAt: new Date()
+    status: "pending", // افتراضي، لاحقاً نغير بعد أول تسجيل دخول
+    invitedAt: new Date(),
   };
 }
+ // 5️⃣ تحديث ملف الشركة
+export async function updateVendorProfileService(
+  organizationId: string,
+  input: UpdateVendorInput,
+  userId: string
+): Promise<Organization> {
+  // التحقق من وجود المنظمة
+  const organization = await findOrganizationById(organizationId);
+  if (!organization) {
+    throw new Error("ORGANIZATION_NOT_FOUND");
+  }
 
+  // تحديث المنظمة
+  const updatedOrg = await updateOrganization(organizationId, input);
+  if (!updatedOrg) {
+    throw new Error("UPDATE_FAILED");
+  }
+
+  // تسجيل في audit log
+  await createAuditLog({
+    actorUserId: userId,
+    organizationId,
+    action: 'VENDOR_PROFILE_UPDATED',
+    entityType: 'organization',
+    entityId: organizationId,
+    oldValues: {
+      name: organization.name,
+      slug: organization.slug,
+      status: organization.status
+    },
+    newValues: {
+      name: updatedOrg.name,
+      slug: updatedOrg.slug,
+      status: updatedOrg.status
+    }
+  });
+
+  return updatedOrg;
+}
 // 4️⃣ جلب منتجات البائع
 export async function getVendorProductsService(
   organizationId: string,
-  filters: VendorProductFilters
+  filters: VendorProductFilters,
 ) {
   const { page = 1, limit = 10, active, search } = filters;
   const offset = (page - 1) * limit;
@@ -236,11 +320,14 @@ export async function getVendorProductsService(
     active,
     search,
     limit,
-    offset
+    offset,
   });
 
   // جلب العدد الكلي
-  const total = await countProductsByOrganization(organizationId, { active, search });
+  const total = await countProductsByOrganization(organizationId, {
+    active,
+    search,
+  });
 
   // جلب الفاريانتات لكل منتج
   const productsWithVariants = await Promise.all(
@@ -248,9 +335,9 @@ export async function getVendorProductsService(
       const variants = await findVariantsByProductId(product.id);
       return {
         ...product,
-        variants
+        variants,
       };
-    })
+    }),
   );
 
   return {
@@ -261,7 +348,8 @@ export async function getVendorProductsService(
       total,
       totalPages: Math.ceil(total / limit),
       hasNext: page < Math.ceil(total / limit),
-      hasPrevious: page > 1
-    }
+      hasPrevious: page > 1,
+    },
   };
+ 
 }
