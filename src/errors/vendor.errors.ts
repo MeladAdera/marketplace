@@ -1,11 +1,9 @@
-// ==========================================
 // src/errors/vendor.errors.ts
-// ==========================================
 
 import { AppError } from './AppError';
 
 /**
- * خطأ: اسم الشركة (slug) موجود مسبقاً
+ * Error: Company slug already exists
  */
 export class SlugAlreadyExistsError extends AppError {
   constructor(slug: string) {
@@ -20,7 +18,7 @@ export class SlugAlreadyExistsError extends AppError {
 }
 
 /**
- * خطأ: المنشأة (الشركة) غير موجودة
+ * Error: Organization not found
  */
 export class OrganizationNotFoundError extends AppError {
   constructor(organizationId?: string | number) {
@@ -37,7 +35,7 @@ export class OrganizationNotFoundError extends AppError {
 }
 
 /**
- * خطأ: المستخدم لا ينتمي لأي منشأة
+ * Error: User does not belong to any organization
  */
 export class NoOrganizationError extends AppError {
   constructor() {
@@ -50,7 +48,7 @@ export class NoOrganizationError extends AppError {
 }
 
 /**
- * خطأ: مدير الشركة غير موجود
+ * Error: Admin not found
  */
 export class AdminNotFoundError extends AppError {
   constructor() {
@@ -63,7 +61,7 @@ export class AdminNotFoundError extends AppError {
 }
 
 /**
- * خطأ: المستخدم موجود بالفعل في هذه المنشأة
+ * Error: User already exists in this organization
  */
 export class UserAlreadyInOrganizationError extends AppError {
   constructor(email: string) {
@@ -78,7 +76,7 @@ export class UserAlreadyInOrganizationError extends AppError {
 }
 
 /**
- * خطأ: البريد الإلكتروني مسجل في منشأة أخرى
+ * Error: Email already registered in another organization
  */
 export class EmailAlreadyRegisteredError extends AppError {
   constructor(email: string) {

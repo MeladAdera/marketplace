@@ -2,9 +2,9 @@
 
 export class AppError extends Error {
   public readonly statusCode: number;    // HTTP status code (400, 401, 404, 500...)
-  public readonly errorCode: string;     // كود الخطأ الفريد (مثل: INVALID_CREDENTIALS)
-  public readonly isOperational: boolean; // true = خطأ متوقع (مثل validation)
-  public readonly details?: Record<string, any>; // تفاصيل إضافية
+  public readonly errorCode: string;     
+  public readonly isOperational: boolean; 
+  public readonly details?: Record<string, any>; 
 
   constructor(
     message: string,
@@ -24,7 +24,6 @@ export class AppError extends Error {
   }
 
   /**
-   * تحويل الخطأ إلى JSON لإرساله للعميل
    */
   toJSON() {
     return {

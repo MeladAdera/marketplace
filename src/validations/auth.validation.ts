@@ -4,7 +4,6 @@ import {
   emailSchema, 
   passwordSchema, 
   passwordLoginSchema,
-  ipSchema,
   roleSchema 
 } from "./common.validation";
 

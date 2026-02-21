@@ -6,7 +6,7 @@
 import { AppError } from './AppError';
 
 /**
- * خطأ: فشل الاتصال بقاعدة البيانات
+ * Database connection failed
  */
 export class DatabaseConnectionError extends AppError {
   constructor(originalError?: Error) {
@@ -21,7 +21,7 @@ export class DatabaseConnectionError extends AppError {
 }
 
 /**
- * خطأ: انتهاك unique constraint (مثل email مكرر)
+ * Error: Violation of unique constraint (e.g., duplicate email)
  */
 export class UniqueConstraintViolationError extends AppError {
   constructor(field: string, value: string) {
@@ -36,7 +36,7 @@ export class UniqueConstraintViolationError extends AppError {
 }
 
 /**
- * خطأ: انتهاك foreign key constraint
+ * foreign key constraint
  */
 export class ForeignKeyViolationError extends AppError {
   constructor(message: string) {
@@ -50,7 +50,7 @@ export class ForeignKeyViolationError extends AppError {
 }
 
 /**
- * خطأ: فشل في الـ transaction
+ * Error: Transaction failed
  */
 export class TransactionError extends AppError {
   constructor(message: string = 'Transaction failed', originalError?: Error) {
@@ -65,8 +65,7 @@ export class TransactionError extends AppError {
 }
 
 /**
- * خطأ: خطأ في استعلام قاعدة البيانات
- */
+* Error: Database query error */
 export class QueryError extends AppError {
   constructor(message: string, originalError?: Error) {
     super(

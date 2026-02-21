@@ -1,26 +1,24 @@
-// ==========================================
 // src/errors/index.ts
-// ==========================================
 
 import { AppError } from './AppError';
 
-// تصدير الكلاس الأساسي
+// Export base class
 export { AppError } from './AppError';
 
-// تصدير أخطاء المصادقة
+// Export authentication errors
 export * from './auth.errors';
 
-// تصدير أخطاء البائعين
+// Export vendor errors
 export * from './vendor.errors';
 
-// تصدير أخطاء المنتجات
+// Export product errors
 export * from './product.errors';
 
-// تصدير أخطاء قاعدة البيانات
+// Export database errors
 export * from './database.errors';
 
 /**
- * دوال مساعدة للتحقق من نوع الخطأ
+ * Helper functions to check error type
  */
 export function isAppError(error: unknown): error is AppError {
   return error instanceof AppError;

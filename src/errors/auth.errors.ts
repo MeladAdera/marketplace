@@ -1,24 +1,22 @@
-// ==========================================
 // src/errors/auth.errors.ts
-// ==========================================
 
 import { AppError } from './AppError';
 
 /**
- * خطأ: البريد الإلكتروني أو كلمة المرور غير صحيحة
+ * Error: Incorrect email or password
  */
 export class InvalidCredentialsError extends AppError {
   constructor() {
     super(
-      'Invalid email or password',  // رسالة للمستخدم
-      401,                          // Unauthorized
-      'INVALID_CREDENTIALS'         // كود داخلي
+      'Invalid email or password',  
+      401,                          
+      'INVALID_CREDENTIALS'         
     );
   }
 }
 
 /**
- * خطأ: الحساب معطل
+ * User account is disabled
  */
 export class UserDisabledError extends AppError {
   constructor() {
@@ -31,20 +29,20 @@ export class UserDisabledError extends AppError {
 }
 
 /**
- * خطأ: البريد الإلكتروني موجود مسبقاً
+ *Email already exists
  */
 export class EmailAlreadyExistsError extends AppError {
   constructor() {
     super(
       'Email already exists',
-      409,                          // Conflict
+      409,                          
       'EMAIL_ALREADY_EXISTS'
     );
   }
 }
 
 /**
- * خطأ: دور المستخدم غير صحيح
+ * INVALID_ROLE
  */
 export class InvalidRoleError extends AppError {
   constructor(role?: string) {
@@ -57,7 +55,7 @@ export class InvalidRoleError extends AppError {
 }
 
 /**
- * خطأ: الجلسة غير موجودة
+ * Session not found
  */
 export class SessionNotFoundError extends AppError {
   constructor() {
@@ -70,7 +68,7 @@ export class SessionNotFoundError extends AppError {
 }
 
 /**
- * خطأ: الجلسة ملغية
+ *Session revoked
  */
 export class SessionRevokedError extends AppError {
   constructor() {
@@ -83,7 +81,7 @@ export class SessionRevokedError extends AppError {
 }
 
 /**
- * خطأ: الجلسة منتهية الصلاحية
+ *Session expired
  */
 export class SessionExpiredError extends AppError {
   constructor() {
@@ -96,7 +94,7 @@ export class SessionExpiredError extends AppError {
 }
 
 /**
- * خطأ: المستخدم غير مصادق عليه
+ * user UNAUTHORIZED
  */
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Not authenticated') {
@@ -109,7 +107,7 @@ export class UnauthorizedError extends AppError {
 }
 
 /**
- * خطأ: صلاحيات غير كافية
+ * Error: Insufficient permissions
  */
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Insufficient permissions') {

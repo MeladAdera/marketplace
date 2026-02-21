@@ -98,12 +98,11 @@ export const updateProductController = asyncHandler(async (req: AuthRequest, res
 
   const id = req.params.id as string;
   
-  // ✅ التصحيح: ترتيب الباراميترز يجب أن يطابق الـ service
   const updated = await updateProductService(
-    req.user.organization_id,  // organizationId أولاً
-    id,                         // productId ثانياً
-    req.body,                   // input ثالثاً
-    req.user.id                 // userId رابعاً
+    req.user.organization_id,  
+    id,                        
+    req.body,                   
+    req.user.id                 
   );
 
   return res.status(200).json({
@@ -138,12 +137,12 @@ export const deleteProductController = asyncHandler(async (req: AuthRequest, res
   }
 
   const id = req.params.id as string;
-  console.log("7. Deleting product with ID:", id); // 👈 تأكد من الـ ID هنا
+  console.log("7. Deleting product with ID:", id); 
 
   await deleteProductService(
-  req.user.organization_id, // ✅ organizationId أولاً
-  id,                       // ✅ productId ثانياً
-  req.user.id              // ✅ userId ثالثاً
+  req.user.organization_id, 
+  id,                       
+  req.user.id              
 )
 
   return res.status(200).json({

@@ -1,11 +1,9 @@
-// ==========================================
 // src/errors/product.errors.ts
-// ==========================================
 
 import { AppError } from './AppError';
 
 /**
- * خطأ: المنتج غير موجود
+ * Error: Product not found
  */
 export class ProductNotFoundError extends AppError {
   constructor(productId?: string | number) {
@@ -22,7 +20,7 @@ export class ProductNotFoundError extends AppError {
 }
 
 /**
- * خطأ: الـ variant غير موجود
+ * Error: Variant not found
  */
 export class VariantNotFoundError extends AppError {
   constructor(variantId?: string | number) {
@@ -39,7 +37,7 @@ export class VariantNotFoundError extends AppError {
 }
 
 /**
- * خطأ: المخزون غير كافي
+ * Error: Insufficient stock
  */
 export class InsufficientStockError extends AppError {
   constructor(variantId: string | number, requested: number, available: number) {
@@ -54,7 +52,7 @@ export class InsufficientStockError extends AppError {
 }
 
 /**
- * خطأ: المنتج غير نشط
+ * Error: Product is not active
  */
 export class ProductNotActiveError extends AppError {
   constructor(productId?: string | number) {
@@ -71,7 +69,7 @@ export class ProductNotActiveError extends AppError {
 }
 
 /**
- * خطأ: SKU موجود مسبقاً
+ * Error: SKU already exists
  */
 export class DuplicateSkuError extends AppError {
   constructor(sku: string) {
