@@ -2,30 +2,10 @@
 import pool from "../db/database";
 import { User, CreateUserInput, UserRole } from "../types/user.types";
 
-export interface DbUserRow {
-  id: string;
-  organization_id: string | null;
-  email: string;
-  password_hash: string;
-  role: UserRole;  // تغيير من string إلى UserRole
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
-
-// تحويل من صف قاعدة البيانات إلى كائن User
-export function mapDbUserToUser(dbUser: DbUserRow): User {
-  return {
-    id: dbUser.id,
-    organizationId: dbUser.organization_id,
-    email: dbUser.email,
-    passwordHash: dbUser.password_hash,
-    role: dbUser.role,
-    isActive: dbUser.is_active,
-    createdAt: dbUser.created_at,
-    updatedAt: dbUser.updated_at,
-  };
-}
+/**
+ * ✅ لم نعد بحاجة لـ DbUserRow لأن User يطابق قاعدة البيانات الآن
+ * ✅ لم نعد بحاجة لـ mapDbUserToUser لأن الـ types متطابقة
+ */
 
 export async function findUserByEmail(email: string): Promise<User | null> {
   const query = `
@@ -43,13 +23,8 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     LIMIT 1
   `;
 
-  const result = await pool.query<DbUserRow>(query, [email]);
-  
-  if (!result.rows[0]) {
-    return null;
-  }
-  
-  return mapDbUserToUser(result.rows[0]);
+  const result = await pool.query<User>(query, [email]); // ✅ مباشرة User
+  return result.rows[0] || null;
 }
 
 export async function findUserById(id: string): Promise<User | null> {
@@ -68,19 +43,14 @@ export async function findUserById(id: string): Promise<User | null> {
     LIMIT 1
   `;
 
-  const result = await pool.query<DbUserRow>(query, [id]);
-  
-  if (!result.rows[0]) {
-    return null;
-  }
-  
-  return mapDbUserToUser(result.rows[0]);
+  const result = await pool.query<User>(query, [id]); // ✅ مباشرة User
+  return result.rows[0] || null;
 }
 
 export async function createUser(input: {
   email: string;
   passwordHash: string;
-  role: UserRole;  // تغيير من string إلى UserRole
+  role: UserRole;
   organizationId?: string | null;
 }): Promise<User> {
   const query = `
@@ -104,25 +74,17 @@ export async function createUser(input: {
       NOW(),
       NOW()
     )
-    RETURNING
-      id,
-      organization_id,
-      email,
-      password_hash,
-      role,
-      is_active,
-      created_at,
-      updated_at
+    RETURNING *
   `;
 
-  const result = await pool.query<DbUserRow>(query, [
+  const result = await pool.query<User>(query, [
     input.organizationId ?? null,
     input.email,
     input.passwordHash,
     input.role,
   ]);
 
-  return mapDbUserToUser(result.rows[0]);
+  return result.rows[0];
 }
 
 export async function updateUser(
@@ -174,39 +136,19 @@ export async function updateUser(
     UPDATE users
     SET ${updates.join(', ')}
     WHERE id = $${paramCounter}
-    RETURNING
-      id,
-      organization_id,
-      email,
-      password_hash,
-      role,
-      is_active,
-      created_at,
-      updated_at
+    RETURNING *
   `;
 
-  const result = await pool.query<DbUserRow>(query, values);
-  
-  if (!result.rows[0]) {
-    return null;
-  }
-  
-  return mapDbUserToUser(result.rows[0]);
+  const result = await pool.query<User>(query, values);
+  return result.rows[0] || null;
 }
+
 export async function findUsersByOrganization(
   organizationId: string,
-  options?: { role?: string; limit?: number; offset?: number }
+  options?: { role?: UserRole; limit?: number; offset?: number }
 ): Promise<User[]> {
   let query = `
-    SELECT
-      id,
-      organization_id,
-      email,
-      password_hash,
-      role,
-      is_active,
-      created_at,
-      updated_at
+    SELECT *
     FROM users
     WHERE organization_id = $1
   `;
@@ -239,7 +181,7 @@ export async function findUsersByOrganization(
 
 export async function countUsersByOrganization(
   organizationId: string,
-  role?: string
+  role?: UserRole
 ): Promise<number> {
   let query = `
     SELECT COUNT(*) as count
@@ -263,15 +205,7 @@ export async function findUserByEmailAndOrganization(
   organizationId: string
 ): Promise<User | null> {
   const query = `
-    SELECT
-      id,
-      organization_id,
-      email,
-      password_hash,
-      role,
-      is_active,
-      created_at,
-      updated_at
+    SELECT *
     FROM users
     WHERE email = $1 AND organization_id = $2
     LIMIT 1

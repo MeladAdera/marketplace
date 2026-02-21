@@ -49,6 +49,7 @@ export interface Variant {
 
 export interface CreateVariantInput {
   productId: string;
+  organizationId?: string; // Add this as optional for SKU validation
   sku: string;
   name?: string | null;
   priceCents: number;

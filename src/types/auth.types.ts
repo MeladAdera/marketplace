@@ -1,4 +1,5 @@
-import { UserResponse, UserRole, UserWithOrganization } from "./user.types";
+// src/types/auth.types.ts
+import { User, UserRole, UserWithOrganization } from "./user.types";  
 
 export interface LoginCredentials {
   email: string;
@@ -13,7 +14,7 @@ export interface SignupCredentials {
 }
 
 export interface AuthResponse {
-  user: UserResponse;
+  user: User;  
   session: SessionResponse;
 }
 
@@ -39,5 +40,5 @@ export interface RefreshTokenResponse {
 }
 
 export interface MeResponse {
-  user: UserWithOrganization;
+  user: UserWithOrganization;  
 }

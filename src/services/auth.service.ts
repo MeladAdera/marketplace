@@ -3,20 +3,25 @@ import bcrypt from "bcrypt";
 import { createUser, findUserByEmail, findUserById } from "../repository/users.repo";
 import { createSession } from "../repository/sessions.repo";
 import { generateSessionToken, hashSessionToken } from "../utils/crypto";
-import { toUserResponse } from "../utils/mappers/user.mapper";
-import { UserResponse, UserRole } from "../types/user.types";
+import { User, UserRole } from "../types/user.types";  
+import {
+  InvalidCredentialsError,
+  UserDisabledError,
+  EmailAlreadyExistsError,
+  InvalidRoleError
+} from "../errors";
 
 const SESSION_LIFETIME_MINUTES = 30;
 
 export interface LoginResult {
-  user: UserResponse;
+  user: User;              
   sessionToken: string;
   sessionId: string;
   expiresAt: Date;
 }
 
 export interface SignupResult {
-  user: UserResponse;
+  user: User;              
   sessionToken: string;
   sessionId: string;
   expiresAt: Date;
@@ -34,12 +39,12 @@ export async function signupService(input: {
   const role = input.role || "customer";
 
   if (!["customer", "vendor_admin", "vendor_staff"].includes(role)) {
-    throw new Error("INVALID_ROLE");
+    throw new InvalidRoleError(role);
   }
 
   const existing = await findUserByEmail(email);
   if (existing) {
-    throw new Error("EMAIL_ALREADY_EXISTS");
+    throw new EmailAlreadyExistsError();
   }
 
   const passwordHash = await bcrypt.hash(input.password, 10);
@@ -65,7 +70,7 @@ export async function signupService(input: {
   });
 
   return {
-    user: toUserResponse(user),
+    user,                    
     sessionToken,
     sessionId: session.id,
     expiresAt,
@@ -83,17 +88,18 @@ export async function loginService(input: {
   const user = await findUserByEmail(email);
 
   if (!user) {
-    throw new Error("INVALID_CREDENTIALS");
+    throw new InvalidCredentialsError();
   }
 
-  if (!user.isActive) {
-    throw new Error("USER_DISABLED");
-  }
-
-  const isValidPassword = await bcrypt.compare(input.password, user.passwordHash);
+  const isValidPassword = await bcrypt.compare(input.password, user.password_hash);
 
   if (!isValidPassword) {
-    throw new Error("INVALID_CREDENTIALS");
+    throw new InvalidCredentialsError();
+  }
+
+  // التحقق من الحساب المفعل بعد التحقق من كلمة المرور
+  if (!user.is_active) {
+    throw new InvalidCredentialsError();  
   }
 
   const sessionToken = generateSessionToken();
@@ -110,7 +116,7 @@ export async function loginService(input: {
   });
 
   return {
-    user: toUserResponse(user),
+    user,                    
     sessionToken,
     sessionId: session.id,
     expiresAt,
@@ -124,8 +130,8 @@ export async function refreshSession(input: {
 }): Promise<LoginResult> {
   const user = await findUserById(input.userId);
 
-  if (!user || !user.isActive) {
-    throw new Error("USER_NOT_FOUND_OR_DISABLED");
+  if (!user || !user.is_active) {
+    throw new InvalidCredentialsError();
   }
 
   const sessionToken = generateSessionToken();
@@ -142,7 +148,7 @@ export async function refreshSession(input: {
   });
 
   return {
-    user: toUserResponse(user),
+    user,                   
     sessionToken,
     sessionId: session.id,
     expiresAt,
@@ -151,5 +157,5 @@ export async function refreshSession(input: {
 
 export async function validateUserSession(userId: string): Promise<boolean> {
   const user = await findUserById(userId);
-  return !!user && user.isActive;
+  return !!user && user.is_active;
 }

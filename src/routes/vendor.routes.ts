@@ -8,6 +8,12 @@ import {
   getVendorProductsController,
   updateVendorProfileController
 } from "../controllers/vendor.controller";
+import { 
+  createProductController,
+  getVendorProductsController as getProductsController,
+  updateProductController,
+  deleteProductController 
+} from "../controllers/product.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { 
@@ -27,17 +33,17 @@ router.use(authMiddleware);
 
 // vendor profile
 router.get("/me", getVendorProfileController);
+router.patch("/me", validate(updateVendorValidation), updateVendorProfileController);
 
 // vendor users
 router.post("/users/invite", validate(inviteStaffValidation), inviteStaffController);
 
-// vendor products
-router.get("/products", validate(getVendorProductsValidation), getVendorProductsController);
-router.patch("/me", validate(updateVendorValidation), updateVendorProfileController);  
-
-
-// router.post("/products", createProductController);
-// router.patch("/products/:id", updateProductController);
-// router.delete("/products/:id", deleteProductController);
+// ==========================================
+// vendor products routes
+// ==========================================
+router.get("/products", validate(getVendorProductsValidation), getProductsController);
+router.post("/products", createProductController);
+router.patch("/products/:id", updateProductController);
+router.delete("/products/:id", deleteProductController);
 
 export default router;

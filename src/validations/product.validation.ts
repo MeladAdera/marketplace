@@ -9,6 +9,11 @@ import { uuidSchema, paginationSchema } from "./common.validation";
  * 
  * POST /vendor/products
  */
+// src/validations/product.validation.ts (Add price conversion note)
+
+/**
+ * CREATE PRODUCT VALIDATION
+ */
 export const createProductValidation = z.object({
   body: z.object({
     name: z
@@ -22,8 +27,6 @@ export const createProductValidation = z.object({
       .max(1000, "Description must not exceed 1000 characters")
       .optional()
       .default(""),
-    
-    categoryId: uuidSchema,
     
     active: z.boolean().default(true),
     
@@ -41,7 +44,8 @@ export const createProductValidation = z.object({
         price: z
           .number()
           .positive("Price must be greater than 0")
-          .max(999999.99, "Price is too high"),
+          .max(999999.99, "Price is too high")
+          .transform(val => Math.round(val * 100) / 100), // Ensure 2 decimal places
         
         stock: z
           .number()
@@ -50,6 +54,13 @@ export const createProductValidation = z.object({
           .max(999999, "Stock is too high")
       }))
       .min(1, "At least one variant is required")
+      .refine(
+        (variants) => {
+          const skus = variants.map(v => v.sku);
+          return skus.length === new Set(skus).size;
+        },
+        { message: "Duplicate SKUs are not allowed" }
+      )
   })
 });
 
