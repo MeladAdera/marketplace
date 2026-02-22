@@ -2,11 +2,10 @@
 import rateLimit from "express-rate-limit";
 import { Request, Response } from "express";
 
-// مخزن مؤقت للـ IPs (في الإنتاج استخدم Redis)
 const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 دقيقة
-  max: 5, // 5 محاولات كحد أقصى
-  skipSuccessfulRequests: true, // لا تحسب المحاولات الناجحة
+  windowMs: 15 * 60 * 1000, 
+  max: 5, 
+  skipSuccessfulRequests: true, 
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req: Request, res: Response) => {
@@ -19,16 +18,15 @@ const loginLimiter = rateLimit({
     });
   },
   keyGenerator: (req: Request): string => {
-    // استخدم IP + email لمنع هجمات distributed
     const email = req.body?.email || '';
     return (req.ip || 'unknown') + ':' + email;
   }
 });
 
-// Rate limiter عام لـ API
+// Rate limiter 
 const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 دقيقة
-  max: 100, // 100 طلب كحد أقصى
+  windowMs: 60 * 1000, 
+  max: 100, 
   message: {
     success: false,
     error: {
@@ -38,10 +36,10 @@ const apiLimiter = rateLimit({
   }
 });
 
-// Rate limiter صارم لإنشاء الحسابات
+// Rate limiter 
 const signupLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 ساعة
-  max: 3, // 3 حسابات كحد أقصى من نفس IP
+  windowMs: 60 * 60 * 1000, 
+  max: 3, 
   message: {
     success: false,
     error: {

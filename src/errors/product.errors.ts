@@ -1,5 +1,4 @@
 // src/errors/product.errors.ts
-
 import { AppError } from './AppError';
 
 /**
@@ -14,6 +13,8 @@ export class ProductNotFoundError extends AppError {
       404,
       'PRODUCT_NOT_FOUND',
       true,
+      productId ? { productId } : undefined,
+      'product.not_found',
       productId ? { productId } : undefined
     );
   }
@@ -31,6 +32,8 @@ export class VariantNotFoundError extends AppError {
       404,
       'VARIANT_NOT_FOUND',
       true,
+      variantId ? { variantId } : undefined,
+      'product.variant_not_found',
       variantId ? { variantId } : undefined
     );
   }
@@ -46,6 +49,8 @@ export class InsufficientStockError extends AppError {
       400,
       'INSUFFICIENT_STOCK',
       true,
+      { variantId, requested, available },
+      'product.insufficient_stock',
       { variantId, requested, available }
     );
   }
@@ -63,6 +68,8 @@ export class ProductNotActiveError extends AppError {
       400,
       'PRODUCT_NOT_ACTIVE',
       true,
+      productId ? { productId } : undefined,
+      'product.not_active',
       productId ? { productId } : undefined
     );
   }
@@ -78,7 +85,58 @@ export class DuplicateSkuError extends AppError {
       409,
       'DUPLICATE_SKU',
       true,
+      { sku },
+      'product.duplicate_sku',
       { sku }
     );
   }
 }
+
+/**
+ * Error: Product create failed
+ */
+export class ProductCreateError extends AppError {
+  constructor(details?: Record<string, any>) {
+    super(
+      'Failed to create product',
+      500,
+      'PRODUCT_CREATE_FAILED',
+      true,
+      details,
+      'product.create_failed'
+    );
+  }
+}
+
+/**
+ * Error: Product update failed
+ */
+export class ProductUpdateError extends AppError {
+  constructor(details?: Record<string, any>) {
+    super(
+      'Failed to update product',
+      500,
+      'PRODUCT_UPDATE_FAILED',
+      true,
+      details,
+      'product.update_failed'
+    );
+  }
+}
+
+/**
+ * Error: Product delete failed
+ */
+export class ProductDeleteError extends AppError {
+  constructor(details?: Record<string, any>) {
+    super(
+      'Failed to delete product',
+      500,
+      'PRODUCT_DELETE_FAILED',
+      true,
+      details,
+      'product.delete_failed'
+    );
+  }
+}
+

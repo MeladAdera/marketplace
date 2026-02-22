@@ -1,5 +1,4 @@
-// src/server.ts 
-
+// src/server.ts
 import express from "express";
 import dotenv from "dotenv";
 import pool from "./db/database";
@@ -8,6 +7,8 @@ import helmet from "helmet";
 import cors from "cors"; 
 import routes from "./routes";
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler.middleware"; 
+import i18next, { i18nReady } from "./config/i18n.config"; // ✅ Import i18nReady
+import middleware from "i18next-http-middleware";
 
 dotenv.config();
 
@@ -21,8 +22,11 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+// ✅ i18next Middleware
+app.use(middleware.handle(i18next));
+
 // ✅ Routes
-app.use( routes); 
+app.use(routes); 
 
 // ✅ Health check
 app.get("/health", async (req, res) => {
@@ -44,17 +48,25 @@ app.get("/health", async (req, res) => {
 });
 
 app.use(notFoundHandler);
-
 app.use(errorHandler);
 
-// Test DB connection
-pool.connect()
-  .then(() => console.log("✅ Database connection successful"))
-  .catch(err => console.error("❌ Database connection failed:", err));
-
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API: http://localhost:${PORT}/api`);
+// ✅ Wait for i18next AND database before starting
+Promise.all([
+  i18nReady,
+  pool.connect()
+])
+.then(() => {
+  console.log("✅ Database connection successful");
+  console.log("✅ i18next initialized successfully");
+  
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📝 Health check: http://localhost:${PORT}/health`);
+    console.log(`🔗 API: http://localhost:${PORT}/api`);
+  });
+})
+.catch(err => {
+  console.error("❌ Failed to start server:", err);
+  process.exit(1);
 });

@@ -1,12 +1,7 @@
 // src/middlewares/validate.middleware.ts
 import { Request, Response, NextFunction } from "express";
-import { AnyZodObject, ZodError } from "zod";  // ✅ v3 imports
+import { AnyZodObject, ZodError } from "zod";  
 
-/**
- * =======================================================
- * VALIDATION MIDDLEWARE
- * =======================================================
- */
 
 export const validate = (schema: AnyZodObject) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -24,7 +19,6 @@ export const validate = (schema: AnyZodObject) => {
       
     } catch (error) {
       if (error instanceof ZodError) {
-        // ✅ في v3 نستخدم error.errors
         const formattedErrors = error.errors.map((err) => ({
           field: err.path.join('.'),
           message: err.message,

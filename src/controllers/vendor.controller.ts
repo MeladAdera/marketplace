@@ -1,6 +1,4 @@
-// ==========================================
-// src/controllers/vendor.controller.ts (محدث)
-// ==========================================
+// src/controllers/vendor.controller.ts 
 
 import { Request, Response } from "express";
 import { 
@@ -22,20 +20,13 @@ import {
   UnauthorizedError,
   ForbiddenError,
   NoOrganizationError,
-  OrganizationNotFoundError,
-  AdminNotFoundError,
-  UserAlreadyInOrganizationError,
-  EmailAlreadyRegisteredError,
-  SlugAlreadyExistsError,
-  EmailAlreadyExistsError
 } from "../errors";
 
 /**
- * 1️⃣ POST /vendors/register - تسجيل شركة جديدة
+ * 1️⃣ POST /vendors/register 
  */
 export const registerVendorController = asyncHandler(async (req: Request, res: Response) => {
   const { companyName, companySlug, adminEmail, adminPassword } = req.body;
-  // ✅ Zod already validated all fields
 
   const ipAddress =
     (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
@@ -60,6 +51,7 @@ export const registerVendorController = asyncHandler(async (req: Request, res: R
 
   return res.status(201).json({
     success: true,
+    message: req.t('vendor.registered', { ns: 'vendor' }), 
     data: {
       user: result.user,
       organization: result.organization
@@ -68,20 +60,17 @@ export const registerVendorController = asyncHandler(async (req: Request, res: R
 });
 
 /**
- * 2️⃣ GET /vendors/me - جلب ملف الشركة
+ * 2️⃣ GET /vendors/me 
  */
 export const getVendorProfileController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  // ✅ تحقق من وجود المستخدم
   if (!req.user) {
     throw new UnauthorizedError();
   }
 
-  // ✅ تحقق من الصلاحيات
   if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
     throw new ForbiddenError('Insufficient permissions');
   }
 
-  // ✅ تحقق من وجود منشأة
   if (!req.user.organization_id) {
     throw new NoOrganizationError();
   }
@@ -90,31 +79,28 @@ export const getVendorProfileController = asyncHandler(async (req: AuthRequest, 
 
   return res.status(200).json({
     success: true,
+    message: req.t('profile_retrieved', { ns: 'vendor' }), 
     data: profile
   });
 });
 
 /**
- * 3️⃣ POST /vendors/users/invite - دعوة موظف جديد
+ * 3️⃣ POST /vendors/users/invite 
  */
 export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  // ✅ تحقق من وجود المستخدم
   if (!req.user) {
     throw new UnauthorizedError();
   }
 
-  // ✅ فقط vendor_admin يمكنه دعوة موظفين
   if (req.user.role !== 'vendor_admin') {
     throw new ForbiddenError('Only vendor admin can invite staff');
   }
 
-  // ✅ تحقق من وجود منشأة
   if (!req.user.organization_id) {
     throw new NoOrganizationError();
   }
 
   const { email, role } = req.body;
-  // ✅ Zod already validated email format and role
 
   const input: InviteStaffInput = {
     email: email.toLowerCase().trim(),
@@ -129,32 +115,28 @@ export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: 
 
   return res.status(201).json({
     success: true,
+    message: req.t('staff_invited', { ns: 'vendor' }), 
     data: result
   });
 });
 
-
 /**
- * 4️⃣ GET /vendors/products - جلب منتجات البائع
+ * 4️⃣ GET /vendors/products 
  */
 export const getVendorProductsController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  // ✅ تحقق من وجود المستخدم
   if (!req.user) {
     throw new UnauthorizedError();
   }
 
-  // ✅ تحقق من الصلاحيات
   if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
     throw new ForbiddenError('Insufficient permissions');
   }
 
-  // ✅ تحقق من وجود منشأة
   if (!req.user.organization_id) {
     throw new NoOrganizationError();
   }
 
   const { page, limit, active, search } = req.query;
-  // ✅ Zod already validated and transformed these values
 
   const filters: VendorProductFilters = {
     page: page ? Number(page) : 1,
@@ -167,29 +149,28 @@ export const getVendorProductsController = asyncHandler(async (req: AuthRequest,
 
   return res.status(200).json({
     success: true,
+    message: req.t('products_retrieved', { ns: 'vendor' }), 
     data: result
   });
-  
 });
- 
+
+/**
+ * 5️⃣ PATCH /vendors/me - 
+ */
 export const updateVendorProfileController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  // ✅ تحقق من وجود المستخدم
   if (!req.user) {
     throw new UnauthorizedError();
   }
 
-  // ✅ فقط vendor_admin يمكنه تحديث الملف
   if (req.user.role !== 'vendor_admin') {
     throw new ForbiddenError('Only vendor admin can update company profile');
   }
 
-  // ✅ تحقق من وجود منشأة
   if (!req.user.organization_id) {
     throw new NoOrganizationError();
   }
 
   const { name, status } = req.body;
-  // ✅ Zod already validated
 
   const input: UpdateVendorInput = {
     name,
@@ -204,8 +185,9 @@ export const updateVendorProfileController = asyncHandler(async (req: AuthReques
 
   return res.status(200).json({
     success: true,
+    message: req.t('profile_updated', { ns: 'vendor' }), 
     data: {
       organization: updatedOrg
     }
   });
-})
+});

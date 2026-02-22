@@ -1,0 +1,16 @@
+{
+  "registered": "تم تسجيل البائع بنجاح",
+  "profile_retrieved": "تم جلب بيانات البائع بنجاح",
+  "profile_updated": "تم تحديث بيانات البائع بنجاح",
+  "staff_invited": "تم دعوة الموظف بنجاح",
+  "products_retrieved": "تم جلب منتجات البائع بنجاح",
+  "slug_exists": "اسم الشركة (Slug) \"{{slug}}\" مسجل مسبقاً",
+  "organization_not_found": "المؤسسة غير موجودة",
+  "no_organization": "يجب أن يكون البائع مرتبطاً بمؤسسة",
+  "admin_not_found": "المسؤول غير موجود",
+  "user_already_in_org": "المستخدم {{email}} موجود مسبقاً في هذه المؤسسة",
+  "email_already_registered": "البريد {{email}} مسجل مسبقاً في مؤسسة أخرى",
+  "registration_failed": "فشل تسجيل البائع",
+  "update_failed": "فشل تحديث بيانات البائع",
+  "invite_failed": "فشل دعوة الموظف"
+}

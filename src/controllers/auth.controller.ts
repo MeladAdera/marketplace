@@ -1,6 +1,4 @@
-// ==========================================
-// src/controllers/auth.controller.ts (محدث)
-// ==========================================
+// src/controllers/auth.controller.ts 
 
 import { Request, Response } from "express";
 import { loginService, signupService, refreshSession } from "./../services/auth.service";
@@ -11,10 +9,6 @@ import { AuthResponse } from "../types/auth.types";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { asyncHandler } from "../middlewares/errorHandler.middleware";
 import {
-  InvalidCredentialsError,
-  UserDisabledError,
-  EmailAlreadyExistsError,
-  InvalidRoleError,
   SessionNotFoundError,
   SessionRevokedError,
   SessionExpiredError,
@@ -23,8 +17,6 @@ import {
 
 /**
  * POST /auth/login
- * ✅ Validation: loginValidation
- * ✅ Rate limiting: loginLimiter
  */
 export const loginController = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -53,13 +45,14 @@ export const loginController = asyncHandler(async (req: Request, res: Response) 
     },
   };
 
-  return res.status(200).json(response);
+  return res.status(200).json({
+    success: true,
+    message: req.t('login_success', { ns: 'auth' }), 
+  });
 });
 
 /**
  * POST /auth/signup
- * ✅ Validation: signupValidation
- * ✅ Rate limiting: signupLimiter
  */
 export const signupController = asyncHandler(async (req: Request, res: Response) => {
   const { email, password, role, organizationId } = req.body;
@@ -90,12 +83,15 @@ export const signupController = asyncHandler(async (req: Request, res: Response)
     },
   };
 
-  return res.status(201).json(response);
+  return res.status(201).json({
+    success: true,
+    message: req.t('signup_success', { ns: 'auth' }), 
+    data: response
+  });
 });
 
 /**
  * POST /auth/logout
- * ✅ Validation: logoutValidation 
  */
 export const logoutController = asyncHandler(async (req: Request, res: Response) => {
   const rawToken = req.cookies?.session_token;
@@ -109,13 +105,12 @@ export const logoutController = asyncHandler(async (req: Request, res: Response)
 
   return res.status(200).json({
     success: true,
-    message: "Logged out"
+    message: req.t('logout_success', { ns: 'auth' }) 
   });
 });
 
 /**
  * POST /auth/refresh
- * ✅ Validation: refreshValidation
  */
 export const refreshController = asyncHandler(async (req: Request, res: Response) => {
   const rawToken = req.cookies?.session_token;
@@ -160,6 +155,7 @@ export const refreshController = asyncHandler(async (req: Request, res: Response
 
   return res.status(200).json({
     success: true,
+    message: req.t('refresh_success', { ns: 'auth' }), 
     session: {
       id: result.sessionId,
       expiresAt: result.expiresAt,
@@ -169,8 +165,6 @@ export const refreshController = asyncHandler(async (req: Request, res: Response
 
 /**
  * GET /auth/me
- * ✅ Validation: getMeValidation
- * ✅ Middleware: authMiddleware
  */
 export const getMeController = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.user) {
@@ -181,6 +175,7 @@ export const getMeController = asyncHandler(async (req: AuthRequest, res: Respon
 
   return res.status(200).json({
     success: true,
+    message: req.t('profile_success', { ns: 'auth' }), 
     data: {
       user: userWithoutPassword
     }

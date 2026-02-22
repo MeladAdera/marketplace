@@ -19,7 +19,6 @@ import {
 
 /**
  * 1️⃣ POST /vendors/products
- * إنشاء منتج مع متغيراته
  */
 export const createProductController = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.user) {
@@ -42,9 +41,11 @@ export const createProductController = asyncHandler(async (req: AuthRequest, res
 
   return res.status(201).json({
     success: true,
+    message: req.t('created', { ns: 'product' }), 
     data: result
   });
 });
+
 /**
  * 2️⃣ GET /vendors/products
  */
@@ -77,9 +78,41 @@ export const getVendorProductsController = asyncHandler(async (req: AuthRequest,
 
   return res.status(200).json({
     success: true,
+    message: req.t('list_retrieved', { ns: 'product' }), 
     data: result
   });
 });
+
+/**
+ * 3️⃣ GET /vendors/products/:id
+ */
+export const getVendorProductByIdController = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.user) {
+    throw new UnauthorizedError();
+  }
+
+  if (!['vendor_admin', 'vendor_staff', 'platform_admin'].includes(req.user.role)) {
+    throw new ForbiddenError('Insufficient permissions');
+  }
+
+  if (!req.user.organization_id) {
+    throw new NoOrganizationError();
+  }
+
+  const id = req.params.id as string;
+  
+  const result = await getVendorProductByIdService(
+    req.user.organization_id,
+    id
+  );
+
+  return res.status(200).json({
+    success: true,
+    message: req.t('retrieved', { ns: 'product' }), 
+    data: result
+  });
+});
+
 /**
  * 4️⃣ PATCH /vendors/products/:id
  */
@@ -107,23 +140,15 @@ export const updateProductController = asyncHandler(async (req: AuthRequest, res
 
   return res.status(200).json({
     success: true,
+    message: req.t('updated', { ns: 'product' }), 
     data: updated
   });
 });
+
 /**
  * 5️⃣ DELETE /vendors/products/:id
  */
 export const deleteProductController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  // ✅ تشخيص المشكلة
-  console.log("===== DELETE PRODUCT DEBUG =====");
-  console.log("1. Full URL:", req.originalUrl);
-  console.log("2. Path:", req.path);
-  console.log("3. Route params:", req.params);
-  console.log("4. ID from params:", req.params.id);
-  console.log("5. User:", req.user?.id);
-  console.log("6. Organization:", req.user?.organization_id);
-  console.log("================================");
-
   if (!req.user) {
     throw new UnauthorizedError();
   }
@@ -137,16 +162,15 @@ export const deleteProductController = asyncHandler(async (req: AuthRequest, res
   }
 
   const id = req.params.id as string;
-  console.log("7. Deleting product with ID:", id); 
 
   await deleteProductService(
-  req.user.organization_id, 
-  id,                       
-  req.user.id              
-)
+    req.user.organization_id, 
+    id,                       
+    req.user.id              
+  );
 
   return res.status(200).json({
     success: true,
-    message: "Product deleted successfully"
+    message: req.t('deleted', { ns: 'product' }) 
   });
 });

@@ -1,120 +1,120 @@
 // src/errors/auth.errors.ts
-
 import { AppError } from './AppError';
 
-/**
- * Error: Incorrect email or password
- */
 export class InvalidCredentialsError extends AppError {
   constructor() {
     super(
-      'Invalid email or password',  
-      401,                          
-      'INVALID_CREDENTIALS'         
+      'Invalid email or password',
+      401,
+      'INVALID_CREDENTIALS',
+      true,
+      undefined,
+      'auth.invalid_credentials',  
     );
   }
 }
 
-/**
- * User account is disabled
- */
 export class UserDisabledError extends AppError {
   constructor() {
     super(
       'User account is disabled',
       403,
-      'USER_DISABLED'
+      'USER_DISABLED',
+      true,
+      undefined,
+      'auth.user_disabled',
     );
   }
 }
 
-/**
- *Email already exists
- */
 export class EmailAlreadyExistsError extends AppError {
   constructor() {
     super(
       'Email already exists',
-      409,                          
-      'EMAIL_ALREADY_EXISTS'
+      409,
+      'EMAIL_ALREADY_EXISTS',
+      true,
+      undefined,
+      'auth.email_exists',
     );
   }
 }
 
-/**
- * INVALID_ROLE
- */
 export class InvalidRoleError extends AppError {
   constructor(role?: string) {
     super(
       `Invalid user role${role ? `: ${role}` : ''}`,
       400,
-      'INVALID_ROLE'
+      'INVALID_ROLE',
+      true,
+      undefined,
+      'auth.invalid_role',
+      { role }  // ✅ متغير للترجمة
     );
   }
 }
 
-/**
- * Session not found
- */
 export class SessionNotFoundError extends AppError {
   constructor() {
     super(
       'Session not found',
       401,
-      'SESSION_NOT_FOUND'
+      'SESSION_NOT_FOUND',
+      true,
+      undefined,
+      'auth.session_not_found',
     );
   }
 }
 
-/**
- *Session revoked
- */
 export class SessionRevokedError extends AppError {
   constructor() {
     super(
       'Session revoked',
       401,
-      'SESSION_REVOKED'
+      'SESSION_REVOKED',
+      true,
+      undefined,
+      'auth.session_revoked',
     );
   }
 }
 
-/**
- *Session expired
- */
 export class SessionExpiredError extends AppError {
   constructor() {
     super(
       'Session expired',
       401,
-      'SESSION_EXPIRED'
+      'SESSION_EXPIRED',
+      true,
+      undefined,
+      'auth.session_expired',
     );
   }
 }
 
-/**
- * user UNAUTHORIZED
- */
 export class UnauthorizedError extends AppError {
   constructor(message: string = 'Not authenticated') {
     super(
       message,
       401,
-      'UNAUTHORIZED'
+      'UNAUTHORIZED',
+      true,
+      undefined,
+      'auth.unauthorized',
     );
   }
 }
 
-/**
- * Error: Insufficient permissions
- */
 export class ForbiddenError extends AppError {
   constructor(message: string = 'Insufficient permissions') {
     super(
       message,
       403,
-      'FORBIDDEN'
+      'FORBIDDEN',
+      true,
+      undefined,
+      'auth.forbidden',
     );
   }
 }

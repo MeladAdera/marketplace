@@ -1,0 +1,40 @@
+{
+  "auth": {
+    "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "user_disabled": "حساب المستخدم معطل",
+    "email_exists": "البريد الإلكتروني مسجل مسبقاً",
+    "invalid_role": "صلاحية المستخدم غير صالحة{{role, : }}{{role}}",
+    "session_not_found": "الجلسة غير موجودة",
+    "session_revoked": "تم إلغاء الجلسة",
+    "session_expired": "انتهت صلاحية الجلسة",
+    "unauthorized": "غير مصرح لك بالدخول",
+    "forbidden": "ليس لديك الصلاحيات الكافية"
+  },
+  "vendor": {
+    "slug_exists": "اسم الشركة مسجل مسبقاً",
+    "organization_not_found": "المؤسسة غير موجودة",
+    "no_organization": "يجب أن يكون البائع مرتبطاً بمؤسسة",
+    "admin_not_found": "المسؤول غير موجود",
+    "user_already_in_org": "المستخدم موجود في هذه المؤسسة",
+    "email_already_registered": "البريد مسجل في مؤسسة أخرى",
+    "registration_failed": "فشل تسجيل البائع",
+    "update_failed": "فشل تحديث بيانات البائع",
+    "invite_failed": "فشل دعوة الموظف"
+  },
+  "product": {
+    "not_found": "المنتج غير موجود",
+    "variant_not_found": "متغير المنتج غير موجود",
+    "insufficient_stock": "الكمية غير متوفرة",
+    "not_active": "المنتج غير نشط",
+    "duplicate_sku": "رمز المنتج مسجل مسبقاً"
+  },
+  "common": {
+    "internal_error": "حدث خطأ داخلي في الخادم",
+    "not_found": "المورد المطلوب غير موجود",
+    "validation_failed": "فشل التحقق من البيانات",
+    "success": "تمت العملية بنجاح",
+    "created": "تم الإنشاء بنجاح",
+    "updated": "تم التحديث بنجاح",
+    "deleted": "تم الحذف بنجاح"
+  }
+}

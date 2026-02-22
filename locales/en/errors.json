@@ -1,0 +1,22 @@
+{
+  "auth": {
+    "invalid_credentials": "Invalid email or password",
+    "user_disabled": "User account is disabled",
+    "email_exists": "Email already exists",
+    "invalid_role": "Invalid user role{{role, : }}{{role}}",
+    "session_not_found": "Session not found",
+    "session_revoked": "Session revoked",
+    "session_expired": "Session expired",
+    "unauthorized": "Not authenticated",
+    "forbidden": "Insufficient permissions"
+  },
+  "common": {
+    "internal_error": "Internal server error",
+    "not_found": "Resource not found",
+    "validation_failed": "Validation failed",
+    "success": "Success",
+    "created": "Created",
+    "updated": "Updated",
+    "deleted": "Deleted"
+  }
+}

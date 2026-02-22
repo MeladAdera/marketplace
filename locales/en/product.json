@@ -1,0 +1,17 @@
+{
+  "created": "Product created successfully",
+  "updated": "Product updated successfully",
+  "deleted": "Product deleted successfully",
+  "retrieved": "Product retrieved successfully",
+  "list_retrieved": "Products list retrieved successfully",
+  "variants_created": "Product variants created successfully",
+  "inventory_updated": "Product inventory updated successfully",
+  "not_found": "Product not found",
+  "variant_not_found": "Product variant not found",
+  "insufficient_stock": "Insufficient stock for variant {{variantId}}. Requested: {{requested}}, Available: {{available}}",
+  "not_active": "Product is not active",
+  "duplicate_sku": "SKU \"{{sku}}\" already exists",
+  "create_failed": "Failed to create product",
+  "update_failed": "Failed to update product",
+  "delete_failed": "Failed to delete product"
+}

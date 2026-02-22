@@ -5,12 +5,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError, isAppError } from '../errors/index';
 import { ZodError } from 'zod';
+import i18next from '../config/i18n.config';
 
 /**
  * معالج الأخطاء المركزي
- * 
- * هذا الميدلوير يتعامل مع كل الأخطاء في التطبيق
- * ويرد بردود مناسبة للعميل
  */
 export function errorHandler(
   err: Error | AppError | ZodError,
@@ -18,7 +16,6 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
-  // 1️⃣ تسجيل الخطأ (مهم جداً للتصحيح)
   console.error('=================================');
   console.error(`❌ ERROR at ${new Date().toISOString()}`);
   console.error(`📍 Path: ${req.method} ${req.path}`);
@@ -26,12 +23,11 @@ export function errorHandler(
   console.error(`📝 Message: ${err.message}`);
   console.error('=================================');
   
-  // للتصحيح في بيئة التطوير - نطبع الـ stack
   if (process.env.NODE_ENV === 'development') {
     console.error(err.stack);
   }
 
-  // 2️⃣ التعامل مع أخطاء Zod (Validation)
+  // 1️⃣ Zod Errors
   if (err instanceof ZodError) {
     return res.status(400).json({
       success: false,
@@ -46,10 +42,8 @@ export function errorHandler(
     });
   }
 
-  // 3️⃣ التعامل مع أخطاء PostgreSQL
+  // 2️⃣ Postgres Errors
   if (err.name === 'PostgresError' || err.name === 'DatabaseError' || (err as any).code?.startsWith('23')) {
-    
-    // أخطاء unique constraint (code 23505)
     if ((err as any).code === '23505') {
       const detail = (err as any).detail || '';
       const match = detail.match(/Key \((.*?)\)=\((.*?)\)/);
@@ -74,7 +68,6 @@ export function errorHandler(
       });
     }
 
-    // أخطاء foreign key (code 23503)
     if ((err as any).code === '23503') {
       return res.status(400).json({
         success: false,
@@ -85,7 +78,6 @@ export function errorHandler(
       });
     }
 
-    // أخطاء عامة في قاعدة البيانات
     return res.status(500).json({
       success: false,
       error: {
@@ -98,44 +90,65 @@ export function errorHandler(
     });
   }
 
-  // 4️⃣ التعامل مع أخطاء التطبيق المخصصة (AppError)
+  // 3️⃣ AppError (✅ WITH I18N)
   if (isAppError(err)) {
-    return res.status(err.statusCode).json(err.toJSON());
+    let message = err.message;
+
+    if (req.t && err.translationKey) {
+      message = req.t(err.translationKey, { 
+        ns: 'errors', 
+        ...err.translationParams 
+      });
+    }
+
+    return res.status(err.statusCode).json({
+      success: false,
+      error: {
+        code: err.errorCode,
+        message: message,
+        ...(err.details && { details: err.details }),
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+      }
+    });
   }
 
-  // 5️⃣ التعامل مع أخطاء غير متوقعة
+  // 4️⃣ Generic Errors
   const statusCode = (err as any).statusCode || 500;
+  let message = process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message;
+  
+  if (req.t && statusCode === 500) {
+    message = req.t('common.internal_error', { ns: 'errors' });
+  }
   
   return res.status(statusCode).json({
     success: false,
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message: process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : err.message,
-      ...(process.env.NODE_ENV === 'development' && { 
-        stack: err.stack 
-      })
+      message: message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     }
   });
 }
 
 /**
- * ميدلوير للتعامل مع المسارات غير الموجودة (404)
+ * ✅ MUST BE EXPORTED - 404 Handler
  */
 export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
+  const message = req.t 
+    ? req.t('common.not_found', { ns: 'errors' }) 
+    : `Cannot ${req.method} ${req.path}`;
+  
   res.status(404).json({
     success: false,
     error: {
       code: 'NOT_FOUND',
-      message: `Cannot ${req.method} ${req.path}`
+      message: message
     }
   });
 }
 
 /**
- * ميدلوير للتعامل مع الأخطاء في الـ async functions
- * هذا يغلف الـ controller ويضمن تمرير الأخطاء لـ errorHandler
+ * Async Handler Wrapper
  */
 export function asyncHandler(fn: Function) {
   return (req: Request, res: Response, next: NextFunction) => {

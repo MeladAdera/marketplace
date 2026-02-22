@@ -1,0 +1,17 @@
+{
+  "created": "تم إنشاء المنتج بنجاح",
+  "updated": "تم تحديث المنتج بنجاح",
+  "deleted": "تم حذف المنتج بنجاح",
+  "retrieved": "تم جلب بيانات المنتج بنجاح",
+  "list_retrieved": "تم جلب قائمة المنتجات بنجاح",
+  "variants_created": "تم إنشاء متغيرات المنتج بنجاح",
+  "inventory_updated": "تم تحديث مخزون المنتج بنجاح",
+  "not_found": "المنتج غير موجود",
+  "variant_not_found": "متغير المنتج غير موجود",
+  "insufficient_stock": "الكمية غير متوفرة",
+  "not_active": "المنتج غير نشط",
+  "duplicate_sku": "رمز المنتج مسجل مسبقاً",
+  "create_failed": "فشل إنشاء المنتج",
+  "update_failed": "فشل تحديث المنتج",
+  "delete_failed": "فشل حذف المنتج"
+}

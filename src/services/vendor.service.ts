@@ -36,7 +36,7 @@ import { Organization } from "../types/organization.types";
 
 const SESSION_LIFETIME_MINUTES = 30;
 
-// 1️⃣ تسجيل شركة جديدة
+// 1️⃣ Register new company
 export async function registerVendorService(
   input: RegisterVendorInput,
 ): Promise<RegisterVendorResponse> {
@@ -140,17 +140,17 @@ export async function registerVendorService(
   }
 }
 
-// 2️⃣ جلب ملف الشركة
+// 2️⃣ Get company profile
 export async function getVendorProfileService(
   organizationId: string,
 ): Promise<VendorProfileResponse> {
-  // جلب المنظمة
+  // Get organization
   const organization = await findOrganizationById(organizationId);
   if (!organization) {
     throw new Error("ORGANIZATION_NOT_FOUND");
   }
 
-  // جلب الأدمن (أول مستخدم في المنظمة)
+  // Get admin (first user in organization)
   const admins = await findUsersByOrganization(organizationId, {
     role: "vendor_admin",
     limit: 1,
@@ -160,18 +160,18 @@ export async function getVendorProfileService(
   }
   const admin = admins[0];
 
-  // جلب كل الموظفين
+  // Get all staff
   const staff = await findUsersByOrganization(organizationId);
 
-  // جلب إحصائيات المنتجات
+  // Get product statistics
   const totalProducts = await countProductsByOrganization(organizationId, {
     active: true,
   });
 
-  // جلب إحصائيات الموظفين
+  // Get staff statistics
   const totalStaff = await countUsersByOrganization(organizationId);
 
-  // مؤقتاً للطلبات (لما نضيف orders later)
+  // Temporarily for orders (when we add orders later)
   const totalOrders = 0;
   const totalRevenue = 0;
   const pendingOrders = 0;
@@ -211,7 +211,7 @@ export async function getVendorProfileService(
   };
 }
 
-// 3️⃣ دعوة موظف جديد
+// 3️⃣ Invite new staff
 export async function inviteStaffService(
   organizationId: string,
   input: InviteStaffInput,
@@ -219,7 +219,7 @@ export async function inviteStaffService(
 ): Promise<InviteStaffResponse> {
   const { email, role } = input;
 
-  // التحقق من أن الإيميل غير مستخدم في هذه المنظمة
+  // Verify that email is not used in this organization
   const existingUser = await findUserByEmailAndOrganization(
     email,
     organizationId,
@@ -228,17 +228,17 @@ export async function inviteStaffService(
     throw new Error("USER_ALREADY_IN_ORGANIZATION");
   }
 
-  // التحقق من أن الإيميل غير مستخدم في منظمة أخرى
+  // Verify that email is not used in another organization
   const userElsewhere = await findUserByEmail(email);
   if (userElsewhere) {
     throw new Error("EMAIL_ALREADY_REGISTERED");
   }
 
-  // إنشاء كلمة مرور مؤقتة
+  // Create temporary password
   const tempPassword = Math.random().toString(36).slice(-8);
   const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-  // إنشاء المستخدم الجديد
+  // Create new user
   const user = await createUser({
     email,
     passwordHash,
@@ -257,36 +257,37 @@ export async function inviteStaffService(
   }
 });
 
-  // TODO: إرسال إيميل الدعوة مع كلمة المرور المؤقتة
+  // TODO: Send invitation email with temporary password
   console.log(`Invitation sent to ${email} with password: ${tempPassword}`);
 
   return {
     id: user.id,
     email: user.email,
     role: user.role,
-    status: "pending", // افتراضي، لاحقاً نغير بعد أول تسجيل دخول
+    status: "pending", // Default, will change after first login
     invitedAt: new Date(),
   };
 }
- // 5️⃣ تحديث ملف الشركة
+
+// 5️⃣ Update company profile
 export async function updateVendorProfileService(
   organizationId: string,
   input: UpdateVendorInput,
   userId: string
 ): Promise<Organization> {
-  // التحقق من وجود المنظمة
+  // Verify organization exists
   const organization = await findOrganizationById(organizationId);
   if (!organization) {
     throw new Error("ORGANIZATION_NOT_FOUND");
   }
 
-  // تحديث المنظمة
+  // Update organization
   const updatedOrg = await updateOrganization(organizationId, input);
   if (!updatedOrg) {
     throw new Error("UPDATE_FAILED");
   }
 
-  // تسجيل في audit log
+  // Log in audit log
   await createAuditLog({
     actorUserId: userId,
     organizationId,
@@ -307,7 +308,8 @@ export async function updateVendorProfileService(
 
   return updatedOrg;
 }
-// 4️⃣ جلب منتجات البائع
+
+// 4️⃣ Get vendor products
 export async function getVendorProductsService(
   organizationId: string,
   filters: VendorProductFilters,
@@ -315,7 +317,7 @@ export async function getVendorProductsService(
   const { page = 1, limit = 10, active, search } = filters;
   const offset = (page - 1) * limit;
 
-  // جلب المنتجات
+  // Get products
   const products = await findProductsByOrganization(organizationId, {
     active,
     search,
@@ -323,13 +325,13 @@ export async function getVendorProductsService(
     offset,
   });
 
-  // جلب العدد الكلي
+  // Get total count
   const total = await countProductsByOrganization(organizationId, {
     active,
     search,
   });
 
-  // جلب الفاريانتات لكل منتج
+  // Get variants for each product
   const productsWithVariants = await Promise.all(
     products.map(async (product) => {
       const variants = await findVariantsByProductId(product.id);
@@ -351,5 +353,4 @@ export async function getVendorProductsService(
       hasPrevious: page > 1,
     },
   };
- 
 }

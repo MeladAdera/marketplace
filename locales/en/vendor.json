@@ -1,0 +1,16 @@
+{
+  "registered": "Vendor registered successfully",
+  "profile_retrieved": "Vendor profile retrieved successfully",
+  "profile_updated": "Vendor profile updated successfully",
+  "staff_invited": "Staff member invited successfully",
+  "products_retrieved": "Vendor products retrieved successfully",
+  "slug_exists": "Company slug \"{{slug}}\" already taken",
+  "organization_not_found": "Organization not found",
+  "no_organization": "Vendor must be associated with an organization",
+  "admin_not_found": "Admin not found",
+  "user_already_in_org": "User {{email}} already exists in this organization",
+  "email_already_registered": "Email {{email}} already registered in another organization",
+  "registration_failed": "Failed to register vendor",
+  "update_failed": "Failed to update vendor profile",
+  "invite_failed": "Failed to invite staff member"
+}
