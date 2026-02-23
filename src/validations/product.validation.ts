@@ -6,13 +6,7 @@ import { uuidSchema, paginationSchema } from "./common.validation";
  * =======================================================
  * CREATE PRODUCT VALIDATION
  * =======================================================
- * 
  * POST /vendor/products
- */
-// src/validations/product.validation.ts (Add price conversion note)
-
-/**
- * CREATE PRODUCT VALIDATION
  */
 export const createProductValidation = z.object({
   body: z.object({
@@ -45,7 +39,7 @@ export const createProductValidation = z.object({
           .number()
           .positive("Price must be greater than 0")
           .max(999999.99, "Price is too high")
-          .transform(val => Math.round(val * 100) / 100), // Ensure 2 decimal places
+          .transform(val => Math.round(val * 100) / 100),
         
         stock: z
           .number()
@@ -68,7 +62,6 @@ export const createProductValidation = z.object({
  * =======================================================
  * UPDATE PRODUCT VALIDATION
  * =======================================================
- * 
  * PATCH /vendor/products/:id
  */
 export const updateProductValidation = z.object({
@@ -99,7 +92,6 @@ export const updateProductValidation = z.object({
  * =======================================================
  * DELETE PRODUCT VALIDATION
  * =======================================================
- * 
  * DELETE /vendor/products/:id
  */
 export const deleteProductValidation = z.object({
@@ -110,22 +102,35 @@ export const deleteProductValidation = z.object({
 
 /**
  * =======================================================
- * UPDATE INVENTORY VALIDATION
+ * GET PRODUCT BY ID VALIDATION
  * =======================================================
- * 
- * PATCH /vendor/inventory/:variantId
+ * GET /vendor/products/:id
  */
-export const updateInventoryValidation = z.object({
+export const getProductByIdValidation = z.object({
   params: z.object({
-    variantId: uuidSchema
-  }),
-  
-  body: z.object({
-    stock: z
-      .number()
-      .int("Stock must be a whole number")
-      .min(0, "Stock cannot be negative")
-      .max(999999, "Stock is too high")
+    id: uuidSchema
+  })
+});
+
+/**
+ * =======================================================
+ * GET VENDOR PRODUCTS VALIDATION
+ * =======================================================
+ * GET /vendor/products
+ */
+export const getVendorProductsValidation = z.object({
+  query: paginationSchema.extend({
+    active: z
+      .string()
+      .optional()
+      .refine(val => val === undefined || val === 'true' || val === 'false', "Active must be 'true' or 'false'")
+      .transform(val => val === 'true' ? true : val === 'false' ? false : undefined),
+    
+    search: z
+      .string()
+      .max(50, "Search term too long")
+      .optional()
+      .transform(val => val?.trim())
   })
 });
 
@@ -133,7 +138,6 @@ export const updateInventoryValidation = z.object({
  * =======================================================
  * PUBLIC PRODUCTS VALIDATION
  * =======================================================
- * 
  * GET /products (public catalog)
  */
 export const publicProductsValidation = z.object({
@@ -160,9 +164,8 @@ export const publicProductsValidation = z.object({
 
 /**
  * =======================================================
- * GET SINGLE PRODUCT VALIDATION
+ * GET SINGLE PRODUCT VALIDATION (Public)
  * =======================================================
- * 
  * GET /products/:id
  */
 export const getProductValidation = z.object({

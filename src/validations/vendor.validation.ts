@@ -83,28 +83,6 @@ export const inviteStaffValidation = z.object({
 
 /**
  * =======================================================
- * GET VENDOR PRODUCTS VALIDATION
- * =======================================================
- * 
- * GET /vendor/products
- */
-export const getVendorProductsValidation = z.object({
-  query: paginationSchema.extend({
-    active: z
-      .enum(['true', 'false'])
-      .transform(val => val === 'true')
-      .optional(),
-    
-    search: z
-      .string()
-      .max(50, "Search term too long")
-      .optional()
-      .transform(val => val?.trim())
-  })
-});
-
-/**
- * =======================================================
  * UPDATE STAFF ROLE VALIDATION
  * =======================================================
  * 

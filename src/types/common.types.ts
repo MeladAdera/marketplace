@@ -1,3 +1,4 @@
+//src/types/common.types.ts
 // التعدادات المشتركة
 export type UserRole = 
   | 'customer' 

@@ -1,3 +1,4 @@
+//src/types/product.types.ts
 import { Organization } from './organization.types';
 
 export interface Product {

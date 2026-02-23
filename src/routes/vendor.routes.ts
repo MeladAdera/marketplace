@@ -1,49 +1,106 @@
-// src/routes/vendor.routes.ts 
-
+// src/routes/vendor.routes.ts
 import { Router } from "express";
 import { 
   registerVendorController,
   getVendorProfileController,
   inviteStaffController,
-  getVendorProductsController,
   updateVendorProfileController
 } from "../controllers/vendor.controller";
 import { 
   createProductController,
-  getVendorProductsController as getProductsController,
+  getVendorProductsController,
+  getVendorProductByIdController,
   updateProductController,
   deleteProductController 
 } from "../controllers/product.controller";
+import {
+  updateStockController,
+  getInventoryHistoryController,
+  checkStockController
+} from "../controllers/inventory.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { 
   registerVendorValidation,
   inviteStaffValidation,
   getVendorProductsValidation, 
-  updateVendorValidation
+  updateVendorValidation,
+  // Product validations
+  createProductValidation,
+  updateProductValidation,
+  deleteProductValidation,
+  getProductByIdValidation,
+  // Inventory validations
+  updateStockValidation,
+  getInventoryHistoryValidation,
+  checkStockValidation
 } from "../validations";
 
 const router = Router();
 
-// ✅ Public route - 
+// ✅ Public route
 router.post("/register", validate(registerVendorValidation), registerVendorController);
 
-// ✅ Protected routes - 
+// ✅ Protected routes
 router.use(authMiddleware); 
 
-// vendor profile
+// ─────────────────────────────────────────────────────────────
+// Vendor Profile
+// ─────────────────────────────────────────────────────────────
 router.get("/me", getVendorProfileController);
 router.patch("/me", validate(updateVendorValidation), updateVendorProfileController);
 
-// vendor users
+// ─────────────────────────────────────────────────────────────
+// Vendor Users (Staff Management)
+// ─────────────────────────────────────────────────────────────
 router.post("/users/invite", validate(inviteStaffValidation), inviteStaffController);
 
-// ==========================================
-// vendor products routes
-// ==========================================
-router.get("/products", validate(getVendorProductsValidation), getProductsController);
-router.post("/products", createProductController);
-router.patch("/products/:id", updateProductController);
-router.delete("/products/:id", deleteProductController);
+// ─────────────────────────────────────────────────────────────
+// Vendor Products
+// ─────────────────────────────────────────────────────────────
+router.get(
+  "/products", 
+  validate(getVendorProductsValidation), 
+  getVendorProductsController
+);
+router.post(
+  "/products", 
+  validate(createProductValidation), 
+  createProductController
+);
+router.get(
+  "/products/:id", 
+  validate(getProductByIdValidation), 
+  getVendorProductByIdController
+);
+router.patch(
+  "/products/:id", 
+  validate(updateProductValidation), 
+  updateProductController
+);
+router.delete(
+  "/products/:id", 
+  validate(deleteProductValidation), 
+  deleteProductController
+);
+
+// ─────────────────────────────────────────────────────────────
+// Vendor Inventory (NEW!)
+// ─────────────────────────────────────────────────────────────
+router.patch(
+  "/inventory/:variantId", 
+  validate(updateStockValidation), 
+  updateStockController
+);
+router.get(
+  "/inventory/history", 
+  validate(getInventoryHistoryValidation), 
+  getInventoryHistoryController
+);
+router.get(
+  "/inventory/check", 
+  validate(checkStockValidation), 
+  checkStockController
+);
 
 export default router;

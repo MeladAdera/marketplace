@@ -13,7 +13,7 @@ i18next
     },
     fallbackLng: 'en',
     preload: ['ar', 'en', 'es'],
-    ns: ['common', 'errors', 'auth', 'product', 'vendor'], 
+    ns: ['common', 'errors', 'auth', 'product', 'vendor','inventory'], 
     defaultNS: 'errors',
     interpolation: {
       escapeValue: false,
