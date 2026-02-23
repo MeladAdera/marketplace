@@ -1,4 +1,4 @@
-// src/routes/vendor.routes.ts
+// src/routes/vendor.routes.tss
 import { Router } from "express";
 import { 
   registerVendorController,
