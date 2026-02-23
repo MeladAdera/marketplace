@@ -1,28 +1,56 @@
 // src/repository/inventory.repo.ts
 import pool from "../db/database";
+import { PoolClient } from "pg";
 import { Variant } from "../types/product.types";
-import { InventoryMovement, CreateInventoryMovementInput } from "../types/inventory.types";
-import { InventoryMovementType } from "../types/common.types"; // Ensure this exists based on your SQL constraint
+import {
+  InventoryMovement,
+  CreateInventoryMovementInput
+} from "../types/inventory.types";
 
 /**
  * 🔒 Locks the variant row to prevent concurrent updates.
- * Must be called inside a transaction.
+ * MUST be called inside a transaction using the SAME client.
  */
 export async function getVariantForUpdate(
+  client: PoolClient,
   variantId: string,
   organizationId: string
-): Promise<Pick<Variant, 'id' | 'stockQuantity' | 'sku'> | null> {
+): Promise<Pick<Variant, "id" | "stockQuantity" | "sku"> | null> {
   const query = `
     SELECT 
-      v.id, 
-      v.stock_quantity as "stockQuantity", 
-      v.sku 
+      v.id,
+      v.stock_quantity as "stockQuantity",
+      v.sku
     FROM variants v
     INNER JOIN products p ON v.product_id = p.id
-    WHERE v.id = $1 
-      AND p.organization_id = $2 
+    WHERE v.id = $1
+      AND p.organization_id = $2
       AND p.soft_deleted_at IS NULL
     FOR UPDATE
+  `;
+
+  const result = await client.query(query, [variantId, organizationId]);
+  return result.rows[0] || null;
+}
+
+/**
+ * 🔍 Read-only variant fetch (NO LOCK)
+ * Use this for availability checks.
+ */
+export async function getVariantById(
+  variantId: string,
+  organizationId: string
+): Promise<Pick<Variant, "id" | "stockQuantity" | "sku"> | null> {
+  const query = `
+    SELECT 
+      v.id,
+      v.stock_quantity as "stockQuantity",
+      v.sku
+    FROM variants v
+    INNER JOIN products p ON v.product_id = p.id
+    WHERE v.id = $1
+      AND p.organization_id = $2
+      AND p.soft_deleted_at IS NULL
   `;
 
   const result = await pool.query(query, [variantId, organizationId]);
@@ -30,38 +58,44 @@ export async function getVariantForUpdate(
 }
 
 /**
- * 📝 Updates the stock quantity on the variants table.
- * Must be called inside a transaction.
+ * 📝 Updates the stock quantity.
+ * MUST use same transaction client.
  */
 export async function updateVariantStock(
+  client: PoolClient,
   variantId: string,
   organizationId: string,
   newStockQuantity: number
-): Promise<Pick<Variant, 'id' | 'stockQuantity' | 'updatedAt'> | null> {
+): Promise<Pick<Variant, "id" | "stockQuantity" | "updatedAt"> | null> {
   const query = `
     UPDATE variants v
-    SET 
-      stock_quantity = $1, 
-      updated_at = NOW() 
+    SET stock_quantity = $1,
+        updated_at = NOW()
     FROM products p
-    WHERE v.product_id = p.id 
-      AND v.id = $2 
-      AND p.organization_id = $3 
-    RETURNING 
-      v.id, 
-      v.stock_quantity as "stockQuantity", 
+    WHERE v.product_id = p.id
+      AND v.id = $2
+      AND p.organization_id = $3
+    RETURNING
+      v.id,
+      v.stock_quantity as "stockQuantity",
       v.updated_at as "updatedAt"
   `;
 
-  const result = await pool.query(query, [newStockQuantity, variantId, organizationId]);
+  const result = await client.query(query, [
+    newStockQuantity,
+    variantId,
+    organizationId
+  ]);
+
   return result.rows[0] || null;
 }
 
 /**
- * 📜 Records an inventory movement log.
- * Must be called inside a transaction.
+ * 📜 Create inventory movement
+ * MUST use same transaction client.
  */
 export async function createInventoryMovement(
+  client: PoolClient,
   input: CreateInventoryMovementInput
 ): Promise<InventoryMovement> {
   const query = `
@@ -90,7 +124,7 @@ export async function createInventoryMovement(
     RETURNING *
   `;
 
-  const result = await pool.query<InventoryMovement>(query, [
+  const result = await client.query(query, [
     input.organizationId,
     input.variantId,
     input.actorUserId || null,
@@ -104,7 +138,7 @@ export async function createInventoryMovement(
 }
 
 /**
- * 📋 Get inventory movement history WITH variant, product & actor details
+ * 📋 Inventory history (READ ONLY — no transaction required)
  */
 export async function getInventoryMovementsWithDetails(
   organizationId: string,
@@ -120,7 +154,6 @@ export async function getInventoryMovementsWithDetails(
       im.reason,
       im.created_at as "createdAt",
       im.variant_id as "variantId",
-      im.actor_user_id as "actorUserId",
       v.sku as "variantSku",
       v.name as "variantName",
       p.id as "productId",
@@ -134,17 +167,17 @@ export async function getInventoryMovementsWithDetails(
     LEFT JOIN users u ON im.actor_user_id = u.id
     WHERE p.organization_id = $1
   `;
-  
+
   const params: any[] = [organizationId];
-  let paramCounter = 2;
+  let counter = 2;
 
   if (variantId) {
-    query += ` AND im.variant_id = $${paramCounter}`;
+    query += ` AND im.variant_id = $${counter}`;
     params.push(variantId);
-    paramCounter++;
+    counter++;
   }
 
-  query += ` ORDER BY im.created_at DESC LIMIT $${paramCounter} OFFSET $${paramCounter + 1}`;
+  query += ` ORDER BY im.created_at DESC LIMIT $${counter} OFFSET $${counter + 1}`;
   params.push(limit, offset);
 
   const result = await pool.query(query, params);

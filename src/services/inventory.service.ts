@@ -2,38 +2,38 @@
 import pool from "../db/database";
 import {
   getVariantForUpdate,
+  getVariantById,
   updateVariantStock,
   createInventoryMovement,
-  getInventoryMovementsWithDetails 
+  getInventoryMovementsWithDetails
 } from "../repository/inventory.repo";
 import { createAuditLog } from "../repository/audit.repo";
-import { StockUpdateInput, InventoryMovementResponse } from "../types/inventory.types";
+import { PoolClient } from "pg";
 import {
   InsufficientStockError,
   VariantNotFoundError
 } from "../errors/inventory.errors";
+import { StockUpdateInput } from "../types/inventory.types";
 
 /**
- * 📦 Update Stock for a Single Variant
+ * 📦 Update Stock (Transaction Safe)
  */
 export async function updateStockService(
   organizationId: string,
   userId: string,
   input: StockUpdateInput
-): Promise<{
-  variantId: string;
-  oldStock: number;
-  newStock: number;
-  change: number;
-}> {
-  const client = await pool.connect();
+) {
+  const client: PoolClient = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // 1️⃣ Lock the variant row (prevents concurrent updates)
-    const variant = await getVariantForUpdate(input.variantId, organizationId);
-    
+    const variant = await getVariantForUpdate(
+      client,
+      input.variantId,
+      organizationId
+    );
+
     if (!variant) {
       throw new VariantNotFoundError(input.variantId);
     }
@@ -41,52 +41,41 @@ export async function updateStockService(
     const oldStock = variant.stockQuantity;
     const newStock = input.quantity;
 
-    // 2️⃣ Validate: Prevent negative stock
     if (newStock < 0) {
       throw new InsufficientStockError(
         `Stock cannot be negative. Requested: ${newStock}`
       );
     }
 
-    // 3️⃣ Calculate the change (delta)
     const quantityChange = newStock - oldStock;
 
-    // 4️⃣ Update the variant stock
-    const updated = await updateVariantStock(
+    await updateVariantStock(
+      client,
       input.variantId,
       organizationId,
       newStock
     );
 
-    if (!updated) {
-      throw new VariantNotFoundError(input.variantId);
-    }
-
-    // 5️⃣ Record inventory movement (history)
-    await createInventoryMovement({
+    await createInventoryMovement(client, {
       organizationId,
       variantId: input.variantId,
       actorUserId: userId,
-      type: 'manual_adjustment',
+      type: "manual_adjustment",
       quantityChange,
-      reason: input.reason || 'Manual stock update via vendor dashboard',
+      reason:
+        input.reason || "Manual stock update via vendor dashboard",
       relatedVendorOrderId: null
     });
 
-    // 6️⃣ Record audit log (for compliance)
+    // ⚠️ IMPORTANT: audit log should also accept client if you want it atomic
     await createAuditLog({
       actorUserId: userId,
       organizationId,
       action: "INVENTORY_UPDATED",
       entityType: "variant",
       entityId: input.variantId,
-      oldValues: {
-        stockQuantity: oldStock
-      },
-      newValues: {
-        stockQuantity: newStock,
-        reason: input.reason
-      }
+      oldValues: { stockQuantity: oldStock },
+      newValues: { stockQuantity: newStock }
     });
 
     await client.query("COMMIT");
@@ -107,74 +96,17 @@ export async function updateStockService(
 }
 
 /**
- * 📋 Get Inventory Movement History
- */
-export async function getInventoryHistoryService(
-  organizationId: string,
-  variantId?: string,
-  page: number = 1,
-  limit: number = 20
-): Promise<{
-  movements: InventoryMovementResponse[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}> {
-  const movements = await getInventoryMovementsWithDetails(
-    organizationId,
-    variantId,
-    limit,
-    (page - 1) * limit
-  );
-
-  return {
-    movements: movements.map(m => ({
-      id: m.id,
-      type: m.type,
-      quantityChange: m.quantityChange,
-      reason: m.reason,
-      createdAt: m.createdAt,
-      variant: {
-        id: m.variantId,
-        sku: m.variantSku,           
-        name: m.variantName,
-        product: {
-          id: m.productId,           
-          name: m.productName     
-        }
-      },
-      actor: m.actorId ? {           
-        id: m.actorId,
-        email: m.actorEmail,
-        role: m.actorRole
-      } : null
-    })),
-    pagination: {
-      page,
-      limit,
-      total: movements.length,
-      totalPages: Math.ceil(movements.length / limit)
-    }
-  };
-}
-
-/**
- * ✅ Check if Stock is Available (for cart/checkout)
+ * ✅ Check Stock (NO LOCK)
  */
 export async function checkStockAvailabilityService(
   organizationId: string,
   variantId: string,
   requestedQuantity: number
-): Promise<{
-  variantId: string;
-  available: boolean;
-  currentStock: number;
-  requestedQuantity: number;
-}> {
-  const variant = await getVariantForUpdate(variantId, organizationId);
+) {
+  const variant = await getVariantById(
+    variantId,
+    organizationId
+  );
 
   if (!variant) {
     throw new VariantNotFoundError(variantId);
@@ -185,5 +117,32 @@ export async function checkStockAvailabilityService(
     available: variant.stockQuantity >= requestedQuantity,
     currentStock: variant.stockQuantity,
     requestedQuantity
+  };
+}
+
+/**
+ * 📋 Inventory History
+ */
+export async function getInventoryHistoryService(
+  organizationId: string,
+  variantId?: string,
+  page: number = 1,
+  limit: number = 20
+) {
+  const movements = await getInventoryMovementsWithDetails(
+    organizationId,
+    variantId,
+    limit,
+    (page - 1) * limit
+  );
+
+  return {
+    movements,
+    pagination: {
+      page,
+      limit,
+      total: movements.length,
+      totalPages: Math.ceil(movements.length / limit)
+    }
   };
 }
