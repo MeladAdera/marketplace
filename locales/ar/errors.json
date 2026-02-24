@@ -36,20 +36,8 @@
     "created": "تم الإنشاء بنجاح",
     "updated": "تم التحديث بنجاح",
     "deleted": "تم الحذف بنجاح"
-  },
+  }
 
-  {
-  "internal_error": "حدث خطأ داخلي في الخادم",
-  "not_found": "المورد المطلوب غير موجود",
-  "validation_error": "فشل التحقق من البيانات",
-  "duplicate_entry": "البيانات مكررة",
-  "database_error": "خطأ في قاعدة البيانات",
   
-  "invitation_already_exists": "يوجد دعوة معلقة مسبقاً للبريد {{email}}",
-  "invitation_not_found": "الدعوة غير موجودة أو تم إلغاؤها",
-  "invitation_expired": "انتهت صلاحية هذه الدعوة",
-  "invitation_already_accepted": "تم قبول هذه الدعوة مسبقاً",
-  "user_already_in_organization": "المستخدم ينتمي بالفعل إلى منظمة أخرى"
-}
 }
 
