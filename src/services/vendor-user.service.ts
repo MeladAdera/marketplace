@@ -150,7 +150,7 @@ export async function acceptInvitationService(token: string, userId: string) {
         entityId: userId,
         newValues: { role: invitation.role, organization_id: invitation.organization_id },
       },
-      client // ✅ تم إضافة client
+      client 
     );
 
     await client.query("COMMIT");
