@@ -1,11 +1,42 @@
-// src/utils/crypto.ts
-import crypto from "crypto";
+import { randomBytes, createHash } from 'crypto';
 
-export function generateSessionToken(): string {
-  // 32 bytes = 256 bits
-  return crypto.randomBytes(32).toString("hex");
+/**
+ * Generate a secure random token (for invitations, password reset, etc.)
+ */
+export function generateSecureToken(length: number = 32): string {
+  return randomBytes(length).toString('hex');
 }
 
+/**
+ * Generate a session token
+ */
+export function generateSessionToken(length: number = 32): string {
+  return generateSecureToken(length); // ✅ استدعاء مباشر بدون this
+}
+
+/**
+ * Hash a token for secure storage (like invitation tokens)
+ */
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+/**
+ * Hash a session token for storage
+ */
 export function hashSessionToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
+  return hashToken(token); // ✅ استدعاء مباشر بدون this
+}
+
+/**
+ * Generate a random password (if needed)
+ */
+export function generateRandomPassword(length: number = 12): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  const bytes = randomBytes(length);
+  for (let i = 0; i < length; i++) {
+    password += chars[bytes[i] % chars.length];
+  }
+  return password;
 }

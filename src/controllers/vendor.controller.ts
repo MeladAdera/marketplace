@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { 
   registerVendorService,
   getVendorProfileService,
-  inviteStaffService,
+  // inviteStaffService,
   getVendorProductsService,
   updateVendorProfileService
 } from "../services/vendor.service";
@@ -85,40 +85,40 @@ export const getVendorProfileController = asyncHandler(async (req: AuthRequest, 
 });
 
 /**
- * 3️⃣ POST /vendors/users/invite 
- */
-export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: Response) => {
-  if (!req.user) {
-    throw new UnauthorizedError();
-  }
+//  * 3️⃣ POST /vendors/users/invite 
+//  */
+// export const inviteStaffController = asyncHandler(async (req: AuthRequest, res: Response) => {
+//   if (!req.user) {
+//     throw new UnauthorizedError();
+//   }
 
-  if (req.user.role !== 'vendor_admin') {
-    throw new ForbiddenError('Only vendor admin can invite staff');
-  }
+//   if (req.user.role !== 'vendor_admin') {
+//     throw new ForbiddenError('Only vendor admin can invite staff');
+//   }
 
-  if (!req.user.organization_id) {
-    throw new NoOrganizationError();
-  }
+//   if (!req.user.organization_id) {
+//     throw new NoOrganizationError();
+//   }
 
-  const { email, role } = req.body;
+//   const { email, role } = req.body;
 
-  const input: InviteStaffInput = {
-    email: email.toLowerCase().trim(),
-    role
-  };
+//   const input: InviteStaffInput = {
+//     email: email.toLowerCase().trim(),
+//     role
+//   };
 
-  const result = await inviteStaffService(
-    req.user.organization_id,
-    input,
-    req.user.id
-  );
+//   const result = await inviteStaffService(
+//     req.user.organization_id,
+//     input,
+//     req.user.id
+//   );
 
-  return res.status(201).json({
-    success: true,
-    message: req.t('staff_invited', { ns: 'vendor' }), 
-    data: result
-  });
-});
+//   return res.status(201).json({
+//     success: true,
+//     message: req.t('staff_invited', { ns: 'vendor' }), 
+//     data: result
+//   });
+// });
 
 /**
  * 4️⃣ GET /vendors/products 
