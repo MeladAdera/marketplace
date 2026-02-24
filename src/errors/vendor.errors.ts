@@ -73,15 +73,17 @@ export class AdminNotFoundError extends AppError {
  * Error: User already exists in this organization
  */
 export class UserAlreadyInOrganizationError extends AppError {
-  constructor(email: string) {
+  constructor(email?: string) {  // ✅ email اختياري
     super(
-      `User ${email} already exists in this organization`,
+      email 
+        ? `User ${email} already exists in this organization`
+        : 'User already exists in this organization',
       409,
       'USER_ALREADY_IN_ORGANIZATION',
       true,
-      { email },
-      'vendor.user_already_in_org',  
-      { email }
+      email ? { email } : undefined,
+      'vendor.user_already_in_org',
+      email ? { email } : undefined
     );
   }
 }
@@ -147,6 +149,75 @@ export class StaffInviteError extends AppError {
       true,
       details,
       'vendor.invite_failed'  
+    );
+  }
+}
+
+
+
+// ✅ ADD THESE 4 NEW CLASSES AT THE END:
+
+/**
+ * Error: Invitation already exists
+ */
+export class InvitationAlreadyExistsError extends AppError {
+  constructor(email: string) {
+    super(
+      `A pending invitation already exists for ${email}`,
+      409,
+      'INVITATION_ALREADY_EXISTS',
+      true,
+      { email },
+      'vendor.invitation_already_exists',
+      { email }
+    );
+  }
+}
+
+/**
+ * Error: Invitation not found
+ */
+export class InvitationNotFoundError extends AppError {
+  constructor() {
+    super(
+      'Invitation not found or has been revoked',
+      404,
+      'INVITATION_NOT_FOUND',
+      true,
+      undefined,
+      'vendor.invitation_not_found'
+    );
+  }
+}
+
+/**
+ * Error: Invitation expired
+ */
+export class InvitationExpiredError extends AppError {
+  constructor() {
+    super(
+      'This invitation has expired',
+      400,
+      'INVITATION_EXPIRED',
+      true,
+      undefined,
+      'vendor.invitation_expired'
+    );
+  }
+}
+
+/**
+ * Error: Invitation already accepted
+ */
+export class InvitationAlreadyAcceptedError extends AppError {
+  constructor() {
+    super(
+      'This invitation has already been accepted',
+      400,
+      'INVITATION_ALREADY_ACCEPTED',
+      true,
+      undefined,
+      'vendor.invitation_already_accepted'
     );
   }
 }

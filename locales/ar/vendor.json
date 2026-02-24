@@ -4,6 +4,12 @@
   "profile_updated": "تم تحديث بيانات البائع بنجاح",
   "staff_invited": "تم دعوة الموظف بنجاح",
   "products_retrieved": "تم جلب منتجات البائع بنجاح",
+  
+  "invitation_sent": "تم إرسال الدعوة بنجاح",
+  "invitation_accepted": "تم قبول الدعوة وانضممت إلى المنظمة",
+  "invitation_revoked": "تم إلغاء الدعوة",
+  "invitations_listed": "تم جلب قائمة الدعوات",
+  
   "slug_exists": "اسم الشركة (Slug) \"{{slug}}\" مسجل مسبقاً",
   "organization_not_found": "المؤسسة غير موجودة",
   "no_organization": "يجب أن يكون البائع مرتبطاً بمؤسسة",
@@ -12,5 +18,10 @@
   "email_already_registered": "البريد {{email}} مسجل مسبقاً في مؤسسة أخرى",
   "registration_failed": "فشل تسجيل البائع",
   "update_failed": "فشل تحديث بيانات البائع",
-  "invite_failed": "فشل دعوة الموظف"
+  "invite_failed": "فشل دعوة الموظف",
+  
+  "invitation_already_exists": "يوجد دعوة معلقة مسبقاً للبريد {{email}}",
+  "invitation_not_found": "الدعوة غير موجودة أو تم إلغاؤها",
+  "invitation_expired": "انتهت صلاحية هذه الدعوة",
+  "invitation_already_accepted": "تم قبول هذه الدعوة مسبقاً"
 }

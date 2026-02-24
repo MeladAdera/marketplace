@@ -65,21 +65,6 @@ export const updateVendorValidation = z.object({
   })
 });
 
-/**
- * =======================================================
- * INVITE STAFF VALIDATION
- * =======================================================
- * 
- * POST /vendor/users/invite
- */
-export const inviteStaffValidation = z.object({
-  body: z.object({
-    email: emailSchema,
-    role: z.enum(['vendor_staff', 'vendor_admin'], {
-      errorMap: () => ({ message: "Role must be vendor_staff or vendor_admin" })
-    })
-  })
-});
 
 /**
  * =======================================================

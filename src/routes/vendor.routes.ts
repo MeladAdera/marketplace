@@ -1,9 +1,7 @@
-// src/routes/vendor.routes.tss
 import { Router } from "express";
 import { 
   registerVendorController,
   getVendorProfileController,
-  inviteStaffController,
   updateVendorProfileController
 } from "../controllers/vendor.controller";
 import { 
@@ -18,6 +16,14 @@ import {
   getInventoryHistoryController,
   checkStockController
 } from "../controllers/inventory.controller";
+// ✅ أضف هذا الاستيراد الجديد
+import {
+  inviteStaffController,
+  acceptInvitationController,
+  revokeInvitationController,
+  listInvitationsController,
+} from "../controllers/vendor-user.controller";
+
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { 
@@ -33,7 +39,11 @@ import {
   // Inventory validations
   updateStockValidation,
   getInventoryHistoryValidation,
-  checkStockValidation
+  checkStockValidation,
+  // ✅ أضف هذه الـ validations الجديدة
+  acceptInvitationValidation,
+  revokeInvitationValidation,
+  listInvitationsValidation,
 } from "../validations";
 
 const router = Router();
@@ -53,7 +63,29 @@ router.patch("/me", validate(updateVendorValidation), updateVendorProfileControl
 // ─────────────────────────────────────────────────────────────
 // Vendor Users (Staff Management)
 // ─────────────────────────────────────────────────────────────
-router.post("/users/invite", validate(inviteStaffValidation), inviteStaffController);
+router.post(
+  "/users/invite", 
+  validate(inviteStaffValidation), 
+  inviteStaffController
+);
+
+router.get(
+  "/invitations", 
+  validate(listInvitationsValidation), 
+  listInvitationsController
+);
+
+router.delete(
+  "/invitations/:id", 
+  validate(revokeInvitationValidation), 
+  revokeInvitationController
+);
+
+router.post(
+  "/invitations/accept", 
+  validate(acceptInvitationValidation), 
+  acceptInvitationController
+);
 
 // ─────────────────────────────────────────────────────────────
 // Vendor Products
