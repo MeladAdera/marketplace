@@ -41,3 +41,20 @@ export class AppError extends Error {
     };
   }
 }
+export class ValidationError extends AppError {
+  constructor(
+    translationKey: string,
+    translationParams?: Record<string, any>,
+    details?: Record<string, any>
+  ) {
+    super(
+      'Validation failed',
+      400,
+      'VALIDATION_ERROR',
+      true,
+      details,
+      translationKey,
+      translationParams
+    );
+  }
+}

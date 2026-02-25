@@ -1,3 +1,4 @@
+import { PoolClient } from "pg";
 import pool from "../db/database";
 import { AuditLog, CreateAuditLogInput, AuditLogFilters } from "../types/audit.types";
 
@@ -5,8 +6,11 @@ import { AuditLog, CreateAuditLogInput, AuditLogFilters } from "../types/audit.t
  * إنشاء سجل تدقيق جديد
  */
 export async function createAuditLog(
-  input: CreateAuditLogInput
+  input: CreateAuditLogInput,
+  client?: PoolClient  // ✅ Add optional client parameter
 ): Promise<AuditLog> {
+  const runner = client || pool;  // ✅ Use client if provided, otherwise pool
+  
   const query = `
     INSERT INTO audit_logs (
       id,
@@ -56,7 +60,7 @@ export async function createAuditLog(
     input.metadata ? JSON.stringify(input.metadata) : null
   ];
 
-  const result = await pool.query(query, values);
+  const result = await runner.query(query, values);  // ✅ Use runner instead of pool
   
   return mapDbAuditToAuditLog(result.rows[0]);
 }

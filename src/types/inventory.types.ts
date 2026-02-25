@@ -1,3 +1,4 @@
+//src/types/inventory.types.ts
 import { InventoryMovementType } from './common.types';
 
 export interface InventoryMovement {

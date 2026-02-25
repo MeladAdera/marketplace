@@ -1,0 +1,7 @@
+{
+  "stock_updated": "Stock updated successfully",
+  "history_retrieved": "Inventory history retrieved",
+  "stock_checked": "Stock availability checked",
+  "variant_not_found": "Variant not found",
+  "insufficient_stock": "Insufficient stock available"
+}

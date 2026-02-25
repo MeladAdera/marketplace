@@ -9,7 +9,8 @@ import {
   createVariants,
   updateProduct,
   softDeleteProduct,
-  findVariantsByProductId
+  findVariantsByProductId,
+  findVariantsByProductIds
 } from "../../repository/products.repo";
 import { createAuditLog } from "../../repository/audit.repo";
 import {
@@ -22,10 +23,7 @@ import {
   ProductNotFoundError,
   VariantNotFoundError,
   DuplicateSkuError,
-  InsufficientStockError,
-  ProductNotActiveError
 } from "../../errors/product.errors";
-import { UnauthorizedError, ForbiddenError } from "../../errors";
 
 /**
  * 📦 CREATE PRODUCT + VARIANTS
@@ -136,6 +134,9 @@ export async function createProductWithVariantsService(
 /**
  * 📋 GET PRODUCTS WITH PAGINATION
  */
+/**
+ * 📋 GET PRODUCTS WITH PAGINATION (Optimized)
+ */
 export async function getVendorProductsService(
   organizationId: string,
   filters: {
@@ -148,7 +149,7 @@ export async function getVendorProductsService(
   const { page = 1, limit = 10, active, search } = filters;
   const offset = (page - 1) * limit;
 
-  // Get products
+  // 1️⃣ Get products
   const products = await findProductsByOrganization(organizationId, {
     active,
     search,
@@ -156,34 +157,37 @@ export async function getVendorProductsService(
     offset
   });
 
-  // Get variants for each product
-  const productsWithVariants = await Promise.all(
-    products.map(async (product) => {
-      const variants = await findVariantsByProductId(product.id);
-      return {
-        id: product.id,
-        organizationId: product.organizationId,
-        name: product.name,
-        description: product.description,
-        active: product.active,
-        createdAt: product.createdAt,
-        updatedAt: product.updatedAt,
-        variants: variants.map(v => ({
-          id: v.id,
-          productId: v.productId,
-          sku: v.sku,
-          name: v.name,
-          priceCents: v.priceCents,
-          stockQuantity: v.stockQuantity,
-          active: v.active,
-          createdAt: v.createdAt,
-          updatedAt: v.updatedAt
-        }))
-      };
-    })
-  );
+  // 🚫 OLD CODE (N+1): Removed Promise.all map loop
+  
+  // 2️⃣ Get ALL variants for these products in ONE query
+  const productIds = products.map(p => p.id);
+  const allVariants = await findVariantsByProductIds(productIds);
 
-  // Get total count
+  // 3️⃣ Map variants to their respective products in memory
+  const productsWithVariants = products.map((product) => ({
+    id: product.id,
+    organizationId: product.organizationId,
+    name: product.name,
+    description: product.description,
+    active: product.active,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+    variants: allVariants
+      .filter(v => v.product_id === product.id) // Match in memory
+      .map(v => ({
+        id: v.id,
+        productId: v.productId,
+        sku: v.sku,
+        name: v.name,
+        priceCents: v.priceCents,
+        stockQuantity: v.stockQuantity,
+        active: v.active,
+        createdAt: v.createdAt,
+        updatedAt: v.updatedAt
+      }))
+  }));
+
+  // 4️⃣ Get total count
   const total = await countProductsByOrganization(organizationId, {
     active,
     search

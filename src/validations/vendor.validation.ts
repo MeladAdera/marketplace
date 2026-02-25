@@ -65,43 +65,6 @@ export const updateVendorValidation = z.object({
   })
 });
 
-/**
- * =======================================================
- * INVITE STAFF VALIDATION
- * =======================================================
- * 
- * POST /vendor/users/invite
- */
-export const inviteStaffValidation = z.object({
-  body: z.object({
-    email: emailSchema,
-    role: z.enum(['vendor_staff', 'vendor_admin'], {
-      errorMap: () => ({ message: "Role must be vendor_staff or vendor_admin" })
-    })
-  })
-});
-
-/**
- * =======================================================
- * GET VENDOR PRODUCTS VALIDATION
- * =======================================================
- * 
- * GET /vendor/products
- */
-export const getVendorProductsValidation = z.object({
-  query: paginationSchema.extend({
-    active: z
-      .enum(['true', 'false'])
-      .transform(val => val === 'true')
-      .optional(),
-    
-    search: z
-      .string()
-      .max(50, "Search term too long")
-      .optional()
-      .transform(val => val?.trim())
-  })
-});
 
 /**
  * =======================================================

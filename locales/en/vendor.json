@@ -4,6 +4,12 @@
   "profile_updated": "Vendor profile updated successfully",
   "staff_invited": "Staff member invited successfully",
   "products_retrieved": "Vendor products retrieved successfully",
+  
+  "invitation_sent": "Invitation sent successfully",
+  "invitation_accepted": "Invitation accepted. You have joined the organization",
+  "invitation_revoked": "Invitation revoked",
+  "invitations_listed": "Invitations list retrieved",
+  
   "slug_exists": "Company slug \"{{slug}}\" already taken",
   "organization_not_found": "Organization not found",
   "no_organization": "Vendor must be associated with an organization",
@@ -12,5 +18,10 @@
   "email_already_registered": "Email {{email}} already registered in another organization",
   "registration_failed": "Failed to register vendor",
   "update_failed": "Failed to update vendor profile",
-  "invite_failed": "Failed to invite staff member"
+  "invite_failed": "Failed to invite staff member",
+  
+  "invitation_already_exists": "A pending invitation already exists for {{email}}",
+  "invitation_not_found": "Invitation not found or has been revoked",
+  "invitation_expired": "This invitation has expired",
+  "invitation_already_accepted": "This invitation has already been accepted"
 }

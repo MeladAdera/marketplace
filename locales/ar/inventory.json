@@ -1,0 +1,7 @@
+{
+  "stock_updated": "تم تحديث المخزون بنجاح",
+  "history_retrieved": "تم استرجاع سجل المخزون",
+  "stock_checked": "تم التحقق من توفر المخزون",
+  "variant_not_found": "الصنف غير موجود",
+  "insufficient_stock": "الكمية غير كافية"
+}

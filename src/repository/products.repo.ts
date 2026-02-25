@@ -1,6 +1,7 @@
 // src/repository/products.repo.ts
 import pool from "../db/database";
 import { Product, Variant, CreateProductInput, UpdateProductInput, CreateVariantInput } from "../types/product.types";
+let queryCount = 0;
 
 export async function findProductsByOrganization(
   organizationId: string,
@@ -11,6 +12,9 @@ export async function findProductsByOrganization(
     offset?: number;
   }
 ): Promise<Product[]> {
+
+  queryCount++;
+  console.log(`🔍 Query #${queryCount}: Fetching Products`);
   let query = `
     SELECT
       id,
@@ -88,6 +92,9 @@ export async function countProductsByOrganization(
 }
 
 export async function findVariantsByProductId(productId: string): Promise<Variant[]> {
+
+  queryCount++;
+  console.log(`🔍 Query #${queryCount}: Fetching Variants for ${productId.length} products`);
   const query = `
     SELECT
       id,
@@ -337,4 +344,17 @@ export async function createVariants(
     results.push(result);
   }
   return results;
+}
+/**
+ * Find variants for multiple products at once (Prevents N+1)
+ */
+export async function findVariantsByProductIds(productIds: string[]) {
+  if (productIds.length === 0) return [];
+
+  const { rows } = await pool.query(
+    `SELECT * FROM variants WHERE product_id = ANY($1)`,
+    [productIds]
+  );
+
+  return rows;
 }
