@@ -101,3 +101,68 @@ export interface VariantFilters {
   page?: number;
   limit?: number;
 }
+/**
+ * Filters for public product listing
+ * 🔒 No organizationId filter - this is public!
+ */
+export interface PublicProductFilters {
+  page: number;
+  limit: number;
+  vendorSlug?: string;      // Filter by vendor slug (not ID)
+  minPrice?: number;        // Filter by min price (cents)
+  maxPrice?: number;        // Filter by max price (cents)
+  search?: string;          // Simple text search on name/description
+}
+
+/**
+ * Lightweight product summary for list view
+ * 🔒 Excludes: organizationId, softDeletedAt, internal flags
+ */
+export interface PublicProductSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  vendor: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  price_range: {
+    min: number;  // in cents
+    max: number;  // in cents
+  };
+  variant_count: number;
+  has_stock: boolean;
+  created_at: string; // ISO string for API
+}
+
+/**
+ * Sanitized variant info for public view
+ * 🔒 Excludes: productId, internal timestamps
+ */
+export interface PublicVariant {
+  id: string;
+  name: string | null;
+  sku: string;
+  price_cents: number;
+  stock_quantity: number;
+  active: boolean;
+}
+
+/**
+ * Full product detail for public view with variants
+ * 🔒 Excludes: organizationId, softDeletedAt, internal flags
+ */
+export interface PublicProductDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  vendor: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  variants: PublicVariant[];
+  created_at: string; // ISO string for API
+  updated_at: string; // ISO string for API
+}

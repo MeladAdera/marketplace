@@ -3,7 +3,7 @@
     "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
     "user_disabled": "حساب المستخدم معطل",
     "email_exists": "البريد الإلكتروني مسجل مسبقاً",
-    "invalid_role": "صلاحية المستخدم غير صالحة{{role, : }}{{role}}",
+    "invalid_role": "صلاحية المستخدم غير صالحة: {{role}}",
     "session_not_found": "الجلسة غير موجودة",
     "session_revoked": "تم إلغاء الجلسة",
     "session_expired": "انتهت صلاحية الجلسة",
@@ -22,11 +22,19 @@
     "invite_failed": "فشل دعوة الموظف"
   },
   "product": {
-    "not_found": "المنتج غير موجود",
+    "not_found": "المنتج غير موجود أو غير متاح",
     "variant_not_found": "متغير المنتج غير موجود",
-    "insufficient_stock": "الكمية غير متوفرة",
+    "insufficient_stock": "الكمية المطلوبة غير متوفرة",
     "not_active": "المنتج غير نشط",
-    "duplicate_sku": "رمز المنتج مسجل مسبقاً"
+    "duplicate_sku": "رمز المنتج (SKU) مسجل مسبقاً لهذه المؤسسة",
+    "unavailable": "هذا المنتج غير متاح للشراء حالياً",
+    "vendor_inactive": "هذا المتجر غير نشط حالياً"
+  },
+  "catalog": {
+    "invalid_price_range": "الحد الأدنى للسعر لا يمكن أن يكون أكبر من الحد الأقصى",
+    "invalid_vendor_slug": "رابط المتجر يجب أن يحتوي فقط على أحرف صغيرة، أرقام، أو شرطات",
+    "search_too_long": "نص البحث طويل جداً (الحد الأقصى 100 حرف)",
+    "invalid_price_format": "يجب أن يكون السعر رقماً صالحاً (مثال: 10.99)"
   },
   "common": {
     "internal_error": "حدث خطأ داخلي في الخادم",
@@ -37,19 +45,19 @@
     "updated": "تم التحديث بنجاح",
     "deleted": "تم الحذف بنجاح"
   },
-
-  {
-  "internal_error": "حدث خطأ داخلي في الخادم",
-  "not_found": "المورد المطلوب غير موجود",
-  "validation_error": "فشل التحقق من البيانات",
-  "duplicate_entry": "البيانات مكررة",
-  "database_error": "خطأ في قاعدة البيانات",
-  
-  "invitation_already_exists": "يوجد دعوة معلقة مسبقاً للبريد {{email}}",
-  "invitation_not_found": "الدعوة غير موجودة أو تم إلغاؤها",
-  "invitation_expired": "انتهت صلاحية هذه الدعوة",
-  "invitation_already_accepted": "تم قبول هذه الدعوة مسبقاً",
-  "user_already_in_organization": "المستخدم ينتمي بالفعل إلى منظمة أخرى"
+    "validation": {
+    "failed": "فشل التحقق من البيانات",
+    "invalid_uuid": "تنسيق المعرف غير صالح (يجب أن يكون UUID)",
+    "invalid_string": "تنسيق غير صالح لـ {{field}}",
+    "invalid_email": "تنسيق البريد الإلكتروني غير صالح",
+    "invalid_url": "تنسيق الرابط غير صالح",
+    "invalid_number": "{{field}} يجب أن يكون رقماً صالحاً",
+    "too_small": "{{field}} يجب أن يكون على الأقل {{minimum}}",
+    "too_big": "{{field}} يجب أن يكون على الأكثر {{maximum}}",
+    "price_too_small": "السعر لا يمكن أن يكون سالباً",
+    "price_too_big": "السعر مرتفع جداً",
+    "invalid_type": "{{field}} يحتوي على نوع بيانات غير صالح",
+    "required": "{{field}} حقل مطلوب",
+    "unrecognized_keys": "حقول غير معروفة: {{fields}}"
+  }
 }
-}
-

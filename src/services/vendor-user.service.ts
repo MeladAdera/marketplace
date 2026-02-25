@@ -48,7 +48,7 @@ export async function inviteStaffService(
     }
 
     // 2. Check if there's already a pending invitation for this email
-    const existingInvitation = await findPendingInvitation(organizationId, email);
+    const existingInvitation = await findPendingInvitation(client, organizationId, email); 
     if (existingInvitation) {
       throw new InvitationAlreadyExistsError(email);
     }

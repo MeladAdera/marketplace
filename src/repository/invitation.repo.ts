@@ -208,6 +208,7 @@ export async function countInvitations(
  * Check if there's a pending invitation for an email in an organization
  */
 export async function findPendingInvitation(
+  client: PoolClient, // ✅ Add client parameter
   organizationId: string,
   email: string
 ): Promise<Invitation | null> {
@@ -219,6 +220,6 @@ export async function findPendingInvitation(
       AND expires_at > NOW()
   `;
 
-  const result = await pool.query(query, [organizationId, email]);
+ const result = await client.query(query, [organizationId, email]); // ✅ Use client
   return result.rows[0] || null;
 }

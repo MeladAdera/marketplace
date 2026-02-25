@@ -2,21 +2,64 @@
   "auth": {
     "invalid_credentials": "Invalid email or password",
     "user_disabled": "User account is disabled",
-    "email_exists": "Email already exists",
-    "invalid_role": "Invalid user role{{role, : }}{{role}}",
+    "email_exists": "Email already registered",
+    "invalid_role": "Invalid user role: {{role}}",
     "session_not_found": "Session not found",
-    "session_revoked": "Session revoked",
-    "session_expired": "Session expired",
-    "unauthorized": "Not authenticated",
-    "forbidden": "Insufficient permissions"
+    "session_revoked": "Session has been revoked",
+    "session_expired": "Session has expired",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "You don't have permission to perform this action"
+  },
+  "vendor": {
+    "slug_exists": "Company name already taken",
+    "organization_not_found": "Organization not found",
+    "no_organization": "Vendor must be associated with an organization",
+    "admin_not_found": "Admin user not found",
+    "user_already_in_org": "User already belongs to this organization",
+    "email_already_registered": "Email already registered in another organization",
+    "registration_failed": "Vendor registration failed",
+    "update_failed": "Failed to update vendor information",
+    "invite_failed": "Failed to invite staff member"
+  },
+  "product": {
+    "not_found": "Product not found or not available",
+    "variant_not_found": "Product variant not found",
+    "insufficient_stock": "Requested quantity is not available",
+    "not_active": "Product is not active",
+    "duplicate_sku": "SKU already exists for this organization",
+    "unavailable": "This product is currently unavailable for purchase",
+    "vendor_inactive": "This vendor is currently inactive"
+  },
+  "catalog": {
+    "invalid_price_range": "Minimum price cannot be greater than maximum price",
+    "invalid_vendor_slug": "Vendor slug must contain only lowercase letters, numbers, or hyphens",
+    "search_too_long": "Search term is too long (max 100 characters)",
+    "invalid_price_format": "Price must be a valid number (e.g., 10.99)"
   },
   "common": {
-    "internal_error": "Internal server error",
-    "not_found": "Resource not found",
-    "validation_failed": "Validation failed",
-    "success": "Success",
-    "created": "Created",
-    "updated": "Updated",
-    "deleted": "Deleted"
-  }
+    "internal_error": "Internal server error occurred",
+    "not_found": "The requested resource was not found",
+    "validation_failed": "Data validation failed",
+    "success": "Operation completed successfully",
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully"
+  },
+  
+  "validation": {
+    "failed": "Validation failed",
+    "invalid_uuid": "Invalid ID format (must be UUID)",
+    "invalid_string": "Invalid format for {{field}}",
+    "invalid_email": "Invalid email address format",
+    "invalid_url": "Invalid URL format",
+    "invalid_number": "{{field}} must be a valid number",
+    "too_small": "{{field}} must be at least {{minimum}}",
+    "too_big": "{{field}} must be at most {{maximum}}",
+    "price_too_small": "Price cannot be negative",
+    "price_too_big": "Price is too high",
+    "invalid_type": "{{field}} has invalid type",
+    "required": "{{field}} is required",
+    "unrecognized_keys": "Unknown fields provided: {{fields}}"
+  
+}
 }

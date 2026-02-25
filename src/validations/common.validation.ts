@@ -6,7 +6,7 @@ import { z } from "zod";
  * UUID VALIDATION
  * =======================================================
  */
-export const uuidSchema = z.string().uuid("Invalid ID format (must be UUID)");
+export const uuidSchema = z.string().uuid();
 
 /**
  * =======================================================
