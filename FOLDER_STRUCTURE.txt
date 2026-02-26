@@ -1,7 +1,7 @@
 ============================================================
 📁 MARKETPLACE-BACKEND STRUCTURE
 ============================================================
-Generated: 2/25/2026, 11:38:12 PM
+Generated: 2/26/2026, 1:49:17 PM
 Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 
@@ -12,13 +12,13 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.json (606 B)
 │   ├── 📄 errors.json (3.62 KB)
 │   ├── 📄 inventory.json (316 B)
-│   ├── 📄 product.json (906 B)
+│   ├── 📄 product.json (1.35 KB)
 │   └── 📄 vendor.json (1.61 KB)
 └── 📁 en/
     ├── 📄 auth.json (421 B)
     ├── 📄 errors.json (2.79 KB)
     ├── 📄 inventory.json (254 B)
-    ├── 📄 product.json (821 B)
+    ├── 📄 product.json (1.12 KB)
     └── 📄 vendor.json (1.35 KB)
 ├── 📁 scripts/
 ├── 📄 create-migration.js (895 B)
@@ -28,6 +28,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   └── 📄 i18n.config.ts (806 B)
 ├── 📁 controllers/
 │   ├── 📄 auth.controller.ts (4.31 KB)
+│   ├── 📄 cart.controller.ts (2.34 KB)
 │   ├── 📄 inventory.controller.ts (2.96 KB)
 │   ├── 📄 product.controller.ts (4.11 KB)
 │   ├── 📄 public.controller.ts (1.69 KB)
@@ -36,7 +37,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 db/
 │   └── 📄 database.ts (634 B)
 ├── 📁 errors/
-│   ├── 📄 AppError.ts (1.57 KB)
+│   ├── 📄 AppError.ts (1.71 KB)
 │   ├── 📄 auth.errors.ts (2.11 KB)
 │   ├── 📄 database.errors.ts (1.64 KB)
 │   ├── 📄 index.ts (634 B)
@@ -63,6 +64,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 modules/
 ├── 📁 repository/
 │   ├── 📄 audit.repo.ts (5.97 KB)
+│   ├── 📄 cart.repo.ts (9.07 KB)
 │   ├── 📄 inventory.repo.ts (4.27 KB)
 │   ├── 📄 invitation.repo.ts (5.37 KB)
 │   ├── 📄 organization.repo.ts (2.57 KB)
@@ -73,26 +75,29 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 routes/
 │   ├── 📁 vendor/
 │   ├── 📄 auth.routes.ts (1.08 KB)
-│   ├── 📄 index.ts (403 B)
+│   ├── 📄 cart.routes.ts (1.17 KB)
+│   ├── 📄 index.ts (440 B)
 │   ├── 📄 public.routes.ts (769 B)
 │   └── 📄 vendor.routes.ts (4.49 KB)
 ├── 📁 services/
 │   ├── 📁 vendor/
 │   │   └── 📄 product.service.ts (9.21 KB)
+│   ├── 📄 audit.service.ts (284 B)
 │   ├── 📄 auth.service.ts (3.92 KB)
+│   ├── 📄 cart.service.ts (6.48 KB)
 │   ├── 📄 inventory.service.ts (3.14 KB)
 │   ├── 📄 public.product.service.ts (2.66 KB)
 │   ├── 📄 vendor-user.service.ts (6.55 KB)
 │   └── 📄 vendor.service.ts (8.73 KB)
 ├── 📁 types/
-│   ├── 📄 audit.types.ts (1.23 KB)
+│   ├── 📄 audit.types.ts (1.25 KB)
 │   ├── 📄 auth.types.ts (819 B)
-│   ├── 📄 cart.types.ts (996 B)
+│   ├── 📄 cart.types.ts (1.05 KB)
 │   ├── 📄 common.types.ts (2.08 KB)
 │   ├── 📄 express.d.ts (176 B)
 │   ├── 📄 inventory.types.ts (1.63 KB)
 │   ├── 📄 invitation.types.ts (1.66 KB)
-│   ├── 📄 order.types.ts (2.26 KB)
+│   ├── 📄 order.types.ts (2.24 KB)
 │   ├── 📄 organization.types.ts (819 B)
 │   ├── 📄 product.types.ts (3.51 KB)
 │   ├── 📄 user.types.ts (1.67 KB)
@@ -103,6 +108,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   └── 📄 migrate.ts (2.72 KB)
 ├── 📁 validations/
 │   ├── 📄 auth.validation.ts (2.56 KB)
+│   ├── 📄 cart.validation.ts (1.62 KB)
 │   ├── 📄 common.validation.ts (4.06 KB)
 │   ├── 📄 index.ts (255 B)
 │   ├── 📄 inventory.validation.ts (1.51 KB)
@@ -122,5 +128,5 @@ Location: /home/lenovo/Desktop/marketplace-backend
 📊 SUMMARY
 ============================================================
 Total Directories: 20
-Total Files: 90
+Total Files: 96
 ============================================================
