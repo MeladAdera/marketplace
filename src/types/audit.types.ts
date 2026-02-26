@@ -1,3 +1,4 @@
+//src/types/audit.types.ts
 export interface AuditLog {
   id: string;
   actorUserId: string | null;

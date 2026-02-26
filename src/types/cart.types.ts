@@ -1,3 +1,4 @@
+//src/types/cart.types.ts
 export interface Cart {
   id: string;
   userId: string;
@@ -29,6 +30,8 @@ export interface CartItemWithDetails extends CartItem {
     sku: string;
     name: string | null;
     priceCents: number;
+    stockQuantity: number;  
+    active: boolean;        
     product: {
       id: string;
       name: string;

@@ -13,5 +13,14 @@
   "duplicate_sku": "SKU \"{{sku}}\" already exists",
   "create_failed": "Failed to create product",
   "update_failed": "Failed to update product",
-  "delete_failed": "Failed to delete product"
+  "delete_failed": "Failed to delete product",
+  "cart": {
+    "item_added": "Item added to cart",
+    "item_updated": "Cart item updated",
+    "item_removed": "Item removed from cart",
+    "cleared": "Cart cleared",
+    "item_not_found": "Cart item not found",
+    "invalid_quantity": "Invalid quantity",
+    "price_may_change": "Prices may change before checkout"
+  }
 }
