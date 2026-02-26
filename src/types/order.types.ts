@@ -1,6 +1,6 @@
+//src/types/order.types.ts
 import { User } from './user.types';
 import { Organization } from './organization.types';
-import { Variant } from './product.types';
 
 export type OrderStatus = 'pending_payment' | 'paid' | 'cancelled';
 export type VendorOrderStatus = 

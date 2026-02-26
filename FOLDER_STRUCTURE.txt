@@ -1,7 +1,7 @@
 ============================================================
 📁 MARKETPLACE-BACKEND STRUCTURE
 ============================================================
-Generated: 2/25/2026, 9:21:11 PM
+Generated: 2/25/2026, 11:38:12 PM
 Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 
@@ -16,7 +16,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   └── 📄 vendor.json (1.61 KB)
 └── 📁 en/
     ├── 📄 auth.json (421 B)
-    ├── 📄 errors.json (2.8 KB)
+    ├── 📄 errors.json (2.79 KB)
     ├── 📄 inventory.json (254 B)
     ├── 📄 product.json (821 B)
     └── 📄 vendor.json (1.35 KB)
@@ -36,7 +36,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 ├── 📁 db/
 │   └── 📄 database.ts (634 B)
 ├── 📁 errors/
-│   ├── 📄 AppError.ts (1.24 KB)
+│   ├── 📄 AppError.ts (1.57 KB)
 │   ├── 📄 auth.errors.ts (2.11 KB)
 │   ├── 📄 database.errors.ts (1.64 KB)
 │   ├── 📄 index.ts (634 B)
@@ -47,7 +47,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.middleware.ts (2.04 KB)
 │   ├── 📄 errorHandler.middleware.ts (4.08 KB)
 │   ├── 📄 rateLimit.middleware.ts (1.18 KB)
-│   └── 📄 validate.middleware.ts (1.05 KB)
+│   └── 📄 validate.middleware.ts (551 B)
 ├── 📁 migrations/
 │   ├── 📄 000_enable_extensions.sql (167 B)
 │   ├── 📄 001_create_organizations_table.sql (939 B)
@@ -81,7 +81,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   │   └── 📄 product.service.ts (9.21 KB)
 │   ├── 📄 auth.service.ts (3.92 KB)
 │   ├── 📄 inventory.service.ts (3.14 KB)
-│   ├── 📄 public.product.service.ts (2.54 KB)
+│   ├── 📄 public.product.service.ts (2.66 KB)
 │   ├── 📄 vendor-user.service.ts (6.55 KB)
 │   └── 📄 vendor.service.ts (8.73 KB)
 ├── 📁 types/
@@ -103,11 +103,11 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   └── 📄 migrate.ts (2.72 KB)
 ├── 📁 validations/
 │   ├── 📄 auth.validation.ts (2.56 KB)
-│   ├── 📄 common.validation.ts (4.1 KB)
+│   ├── 📄 common.validation.ts (4.06 KB)
 │   ├── 📄 index.ts (255 B)
 │   ├── 📄 inventory.validation.ts (1.51 KB)
 │   ├── 📄 invitation.validation.ts (1.12 KB)
-│   ├── 📄 product.validation.ts (4.98 KB)
+│   ├── 📄 product.validation.ts (4.59 KB)
 │   └── 📄 vendor.validation.ts (2.07 KB)
 └── 📄 server.ts (1.84 KB)
 ├── 📄 .env (322 B)
