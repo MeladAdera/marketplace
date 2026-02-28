@@ -63,3 +63,19 @@ export class NotFoundError extends AppError {
     super(message, 404, code);
   }
 }
+export class ConflictError extends AppError {
+  constructor(message: string) {
+    super(message, 409, "CONFLICT");
+  }
+}
+
+export class InternalServerError extends AppError {
+  constructor(message: string) {
+    super(message, 500, "INTERNAL_SERVER_ERROR");
+  }
+}
+export class ForbiddenError extends AppError {
+  constructor(message: string) {
+    super(message, 403, "FORBIDDEN");
+  }
+}
