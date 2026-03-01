@@ -11,7 +11,7 @@ i18next
     backend: {
       loadPath: path.join(__dirname, '../../locales/{{lng}}/{{ns}}.json'),
     },
-    fallbackLng: 'en',
+    fallbackLng: 'ar',
     preload: ['ar', 'en', 'es'],
     ns: ['common', 'errors', 'auth', 'product', 'vendor','inventory'], 
     defaultNS: 'errors',

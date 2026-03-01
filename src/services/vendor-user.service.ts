@@ -10,14 +10,11 @@ import {
   countInvitations,
   findPendingInvitation,
 } from "../repository/invitation.repo";
-import { findUserByEmail } from "../repository/users.repo"; // ✅ تم التصحيح من getUserByEmail
+import { findUserByEmail } from "../repository/users.repo"; 
 import { createAuditLog } from "../repository/audit.repo";
 import {
-  CreateInvitationInput,
-  InvitationFilters,
-  InvitationResponse,
   toResponse,
-  InvitationStatus, // ✅ تم الاستيراد
+  InvitationStatus, 
 } from "../types/invitation.types";
 import {
   InvitationAlreadyExistsError,
@@ -42,7 +39,7 @@ export async function inviteStaffService(
     await client.query("BEGIN");
 
     // 1. Check if user already exists in THIS organization
-    const existingUser = await findUserByEmail(email); // ✅ تم التصحيح
+    const existingUser = await findUserByEmail(email); 
     if (existingUser && existingUser.organization_id === organizationId) {
       throw new UserAlreadyInOrganizationError(email);
     }
@@ -77,7 +74,7 @@ export async function inviteStaffService(
         entityId: invitation.id,
         newValues: { email, role },
       },
-      client // ✅ تم إضافة client
+      client 
     );
 
     await client.query("COMMIT");

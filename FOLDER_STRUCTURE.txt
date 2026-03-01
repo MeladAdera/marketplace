@@ -1,7 +1,7 @@
 ============================================================
 📁 MARKETPLACE-BACKEND STRUCTURE
 ============================================================
-Generated: 2/27/2026, 10:58:03 AM
+Generated: 3/1/2026, 1:23:43 PM
 Location: /home/lenovo/Desktop/marketplace-backend
 ============================================================
 
@@ -30,7 +30,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.controller.ts (4.31 KB)
 │   ├── 📄 cart.controller.ts (2.34 KB)
 │   ├── 📄 inventory.controller.ts (2.96 KB)
-│   ├── 📄 order.controller.ts (2.32 KB)
+│   ├── 📄 order.controller.ts (2.66 KB)
 │   ├── 📄 product.controller.ts (4.11 KB)
 │   ├── 📄 public.controller.ts (1.69 KB)
 │   ├── 📄 vendor-user.controller.ts (2.51 KB)
@@ -49,8 +49,8 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.middleware.ts (2.04 KB)
 │   ├── 📄 errorHandler.middleware.ts (4.08 KB)
 │   ├── 📄 rateLimit.middleware.ts (1.18 KB)
-│   ├── 📄 rbac.middleware.ts (533 B)
-│   └── 📄 validate.middleware.ts (551 B)
+│   ├── 📄 rbac.middleware.ts (789 B)
+│   └── 📄 validate.middleware.ts (1.26 KB)
 ├── 📁 migrations/
 │   ├── 📄 000_enable_extensions.sql (167 B)
 │   ├── 📄 001_create_organizations_table.sql (939 B)
@@ -70,7 +70,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 cart.repo.ts (9.07 KB)
 │   ├── 📄 inventory.repo.ts (4.27 KB)
 │   ├── 📄 invitation.repo.ts (5.37 KB)
-│   ├── 📄 order.repo.ts (20.65 KB)
+│   ├── 📄 order.repo.ts (22.17 KB)
 │   ├── 📄 organization.repo.ts (2.57 KB)
 │   ├── 📄 products.repo.ts (7.72 KB)
 │   ├── 📄 public-products.repo.ts (4.97 KB)
@@ -81,7 +81,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.routes.ts (1.08 KB)
 │   ├── 📄 cart.routes.ts (1.17 KB)
 │   ├── 📄 index.ts (535 B)
-│   ├── 📄 order.routes.ts (1.39 KB)
+│   ├── 📄 order.routes.ts (1.52 KB)
 │   ├── 📄 public.routes.ts (769 B)
 │   └── 📄 vendor.routes.ts (4.49 KB)
 ├── 📁 services/
@@ -91,9 +91,9 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 auth.service.ts (3.92 KB)
 │   ├── 📄 cart.service.ts (6.48 KB)
 │   ├── 📄 inventory.service.ts (3.14 KB)
-│   ├── 📄 order.service.ts (8.39 KB)
+│   ├── 📄 order.service.ts (10.27 KB)
 │   ├── 📄 public.product.service.ts (2.66 KB)
-│   ├── 📄 vendor-user.service.ts (6.55 KB)
+│   ├── 📄 vendor-user.service.ts (6.49 KB)
 │   └── 📄 vendor.service.ts (8.73 KB)
 ├── 📁 types/
 │   ├── 📄 audit.types.ts (1.25 KB)
@@ -119,7 +119,7 @@ Location: /home/lenovo/Desktop/marketplace-backend
 │   ├── 📄 index.ts (255 B)
 │   ├── 📄 inventory.validation.ts (1.51 KB)
 │   ├── 📄 invitation.validation.ts (1.12 KB)
-│   ├── 📄 order.validation.ts (6.43 KB)
+│   ├── 📄 order.validation.ts (6.6 KB)
 │   ├── 📄 product.validation.ts (4.59 KB)
 │   └── 📄 vendor.validation.ts (2.07 KB)
 └── 📄 server.ts (1.84 KB)

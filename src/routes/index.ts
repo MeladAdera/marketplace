@@ -13,7 +13,7 @@ router.use("/auth", authRoutes);
 router.use("/vendors", vendorRoutes);
 router.use("/products", publicRoutes); 
 router.use("/cart", cartRoutes);
-router.use("/orders", orderRoutes); // ✅ Add this
+router.use("/orders", orderRoutes); 
 
 
 
