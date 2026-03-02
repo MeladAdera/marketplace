@@ -1,5 +1,4 @@
 // src/routes/order.routes.ts
-import { Router } from "express";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import {
@@ -17,59 +16,54 @@ import {
   refundSchema,
 } from "../validations/order.validation";
 import { rbacMiddleware } from "../middlewares/rbac.middleware";
-
+import { Router } from "express";
 const router = Router();
+router.use(authMiddleware); 
 
-// All order routes require authentication
-router.use(authMiddleware);
+/* =====================================================
+   👤 CUSTOMER ROUTES
+   Base: /orders
+===================================================== */
 
-/**
- * POST /orders
- * Create order from cart (checkout)
- */
 router.post(
   "/",
+  rbacMiddleware(["customer"]),
   validate({ body: checkoutSchema }),
   checkoutController
 );
 
-/**
- * GET /orders
- * List user's orders with pagination
- */
 router.get(
   "/",
+  rbacMiddleware(["customer"]),
   validate(listOrdersSchema),
   listOrdersController
 );
 
-
-/**
- * GET /orders/:id
- * Get single order details
- */
 router.get(
   "/:id",
+  rbacMiddleware(["customer"]),
   validate({ params: getOrderParamsSchema }),
   getOrderController
 );
 
-/**
- * POST /orders/:id/refund
- * Process refund (Admin/Support only)
- * Note: Add RBAC middleware here to restrict to admin/support roles
- */
-router.post(
-  "/:id/refund",
-  validate({ params: refundParamsSchema }),
-  rbacMiddleware(["support", "platform_admin"]),
-  validate({ body: refundSchema }),
-  refundOrderController
-);
 router.post(
   "/:id/cancel",
+  rbacMiddleware(["customer"]),
   validate({ params: getOrderParamsSchema }),
   cancelOrderController
+);
+
+/* =====================================================
+   🛠 PLATFORM ADMIN ROUTES
+   Base: /orders/admin
+===================================================== */
+
+router.post(
+  "/admin/:id/refund",
+  rbacMiddleware(["platform_admin", "support"]),
+  validate({ params: refundParamsSchema }),
+  validate({ body: refundSchema }),
+  refundOrderController
 );
 
 export default router;
