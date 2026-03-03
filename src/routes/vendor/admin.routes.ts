@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 import { rbacMiddleware } from "../../middlewares/rbac.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { updateOrderStatusSchema } from "../../validations/vendor-admin.validation";
 import {
   listVendorOrdersController,
   getVendorOrderController,
@@ -9,12 +11,17 @@ import {
 
 const router = Router();
 
-// ✅ كل الـ routes تحت /vendor محمية بـ auth + rbac
 router.use(authMiddleware);
 router.use(rbacMiddleware(['vendor_admin', 'vendor_staff']));
 
 router.get("/orders", listVendorOrdersController);
 router.get("/orders/:id", getVendorOrderController);
-router.patch("/orders/:id/status", updateVendorOrderStatusController);
+
+// ✅ NEW: Update order status with validation
+router.patch(
+  "/orders/:id/status",
+  validate(updateOrderStatusSchema),
+  updateVendorOrderStatusController
+);
 
 export default router;
