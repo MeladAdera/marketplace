@@ -1,5 +1,4 @@
 import { VendorOrder, VendorOrderStatus, OrderItemWithVariantResponse } from './order.types';
-import { Organization } from './organization.types';
 
 type UUID = string;
 
@@ -29,7 +28,6 @@ export interface VendorOrderSummary {
 }
 
 export interface VendorOrderDetailResponse extends VendorOrderSummary {
-  // Can extend with more details later if needed
   shippingAddress?: {
     recipient_name: string;
     address_line1: string;
@@ -87,7 +85,7 @@ export interface UpdateOrderStatusResponse {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔹 VENDOR PRODUCT TYPES (For future endpoints)
+// 🔹 VENDOR PRODUCT TYPES
 // ─────────────────────────────────────────────────────────────
 
 export interface VendorProductSummary {
@@ -177,40 +175,111 @@ export interface UpdateInventoryInput {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔹 VENDOR STATISTICS TYPES
+// 🔹 VENDOR STATISTICS TYPES (ENHANCED)
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Filters for statistics endpoint (query params)
+ */
+export interface VendorStatisticsFilters {
+  period?: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+  fromDate?: Date;
+  toDate?: Date;
+}
+
+/**
+ * Detailed breakdown of orders by status
+ */
+export interface OrderStatusBreakdown {
+  pending: number;
+  accepted: number;
+  packed: number;
+  shipped: number;
+  delivered: number;
+  cancelled: number;
+  refunded: number;
+}
+
+/**
+ * Top product stat with optional variant details
+ */
+export interface TopProductStat {
+  productId: UUID;
+  productName: string;
+  variantId?: UUID;              // Optional: if tracking per-variant stats
+  variantName?: string | null;   // e.g., "Red / L"
+  unitsSold: number;
+  revenueCents: number;
+}
+
+/**
+ * Enhanced VendorStatisticsResponse with comprehensive metrics
+ */
 export interface VendorStatisticsResponse {
   success: true;
   data: {
+    // 📈 Key Metrics
     totalOrders: number;
     totalRevenueCents: number;
     averageOrderValueCents: number;
-    pendingOrders: number;
-    topProducts: Array<{
-      productId: UUID;
-      productName: string;
-      unitsSold: number;
-      revenueCents: number;
-    }>;
+    
+    // 📊 Status Breakdown
+    ordersByStatus: OrderStatusBreakdown;
+    
+    // 🎯 Recent Activity
+    recentOrdersCount: number;        // Orders in last 7 days
+    revenueGrowthPercent?: number;    // % change vs previous period (optional)
+    
+    // 🏆 Top Products
+    topProducts: TopProductStat[];
+    
+    // 📦 Inventory Summary
+    lowStockItemsCount: number;       // Items with stock < 10
+    totalVariantsCount: number;       // Total active variants
+    
+    // 🗓️ Period Info
     period: {
+      type: string;                   // 'week', 'month', etc.
       from: Date;
       to: Date;
     };
+    
+    // ⏰ Metadata
+    generatedAt: Date;                // When stats were calculated
   };
 }
 
 // ─────────────────────────────────────────────────────────────
-// 🔹 VENDOR USER MANAGEMENT TYPES
+// 🔹 VENDOR USER MANAGEMENT TYPES (ENHANCED)
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Filters for listing vendor users (query params)
+ */
+export interface VendorUserFilters {
+  role?: 'vendor_admin' | 'vendor_staff';
+  isActive?: boolean;
+  search?: string;                    // Search by email
+  page?: number;
+  limit?: number;
+}
+
+/**
+ * Enhanced VendorUserSummary with audit fields
+ */
 export interface VendorUserSummary {
   id: UUID;
   email: string;
   role: 'vendor_admin' | 'vendor_staff';
   isActive: boolean;
   createdAt: Date;
-  lastLoginAt?: Date;
+  lastLoginAt?: Date | null;          // Nullable: user may never have logged in
+  
+  // Who invited this user? (useful for audit)
+  invitedBy?: {
+    id: UUID;
+    email: string;
+  } | null;
 }
 
 export interface VendorUserListResponse {
@@ -226,12 +295,65 @@ export interface VendorUserListResponse {
   };
 }
 
+/**
+ * Enhanced InviteVendorUserInput with email option
+ */
 export interface InviteVendorUserInput {
   email: string;
   role: 'vendor_admin' | 'vendor_staff';
+  sendEmail?: boolean;                // Default: true - whether to send invitation email
 }
 
+/**
+ * Response for successful invitation
+ */
+export interface InviteVendorUserResponse {
+  success: true;
+  data: {
+    invitationId: UUID;
+    email: string;
+    role: string;
+    status: 'pending' | 'accepted' | 'expired';
+    expiresAt: Date;                  // When the invitation link expires
+    message: string;                  // "Invitation sent to email@example.com"
+  };
+}
+
+/**
+ * Input for accepting an invitation
+ */
 export interface AcceptInvitationInput {
   invitationToken: string;
   password: string;
+}
+
+// ─────────────────────────────────────────────────────────────
+// 🔹 HELPER TYPES (Reusable across endpoints)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Standard pagination metadata
+ */
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Standard success response wrapper (for consistency)
+ */
+export interface SuccessResponse<T> {
+  success: true;
+  data: T;
+  message?: string;
+}
+
+/**
+ * Date range utility (used in statistics, reports, etc.)
+ */
+export interface DateRange {
+  from: Date;
+  to: Date;
 }

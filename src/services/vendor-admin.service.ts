@@ -1,37 +1,79 @@
 import {
-  findVendorOrdersByOrgId,
-  findVendorOrderById,
-  updateVendorOrderStatus,
-} from "../repository/vendor-orders.repo";
+  // Statistics Repo
+  getVendorStatistics,
+  // Users Repo
+  findVendorUsersByOrgId,
+
+} from "../repository/vendor-admin.repo";
 import {
-  VendorOrderSummary,
-  VendorOrderFilters,
-  VendorOrderListResponse,
-  VendorOrderDetailResponse,
-  UpdateOrderStatusInput,
+  // Statistics Types
+  VendorStatisticsFilters,
+  VendorStatisticsResponse,
+  // Users Types
+  VendorUserFilters,
+  VendorUserListResponse,
+  InviteVendorUserInput,
+  InviteVendorUserResponse,
 } from "../types/vendor-admin.types";
 import {
   ValidationError,
   NotFoundError,
   ForbiddenError,
+  ConflictError,
 } from "../errors/AppError";
 import { AuditService } from "./audit.service";
 
+type UUID = string;
+
 // ─────────────────────────────────────────────────────────────
-// 🔹 LIST VENDOR ORDERS (GET /vendor/orders)
+// 🔹 GET /vendor/statistics - SERVICE
 // ─────────────────────────────────────────────────────────────
 
-export async function listVendorOrdersService(
-  organizationId: string,
-  filters: VendorOrderFilters,
+export async function getVendorStatisticsService(
+  organizationId: UUID,
+  filters: VendorStatisticsFilters,
   t?: (key: string, params?: any) => string
-): Promise<VendorOrderListResponse> {
+): Promise<VendorStatisticsResponse> {
+  
+  // ✅ No additional business logic needed here
+  // The repo handles all the complex queries with transaction
+  
+  const statistics = await getVendorStatistics(organizationId, filters);
+
+  // ✅ Log the access (non-blocking, for audit trail)
+  await AuditService.log({
+    actorUserId: "", // Will be filled by controller
+    organizationId,
+    action: "VENDOR_STATISTICS_VIEWED",
+    entityType: "statistics",
+    entityId: organizationId,
+    metadata: {
+      period: filters.period || 'default',
+      generatedAt: statistics.generatedAt,
+    },
+  }).catch((err: Error) => console.error("Audit log failed:", err));
+
+  return {
+    success: true,
+    data: statistics,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+// 🔹 GET /vendor/users - SERVICE
+// ─────────────────────────────────────────────────────────────
+
+export async function listVendorUsersService(
+  organizationId: UUID,
+  filters: VendorUserFilters,
+  t?: (key: string, params?: any) => string
+): Promise<VendorUserListResponse> {
   
   // ✅ Validate pagination params
   const page = Math.max(1, filters.page || 1);
-  const limit = Math.min(100, Math.max(1, filters.limit || 20)); // Cap at 100 to prevent abuse
+  const limit = Math.min(100, Math.max(1, filters.limit || 20)); // Cap at 100
 
-  const { orders, total } = await findVendorOrdersByOrgId(organizationId, {
+  const { users, total } = await findVendorUsersByOrgId(organizationId, {
     ...filters,
     page,
     limit,
@@ -42,7 +84,7 @@ export async function listVendorOrdersService(
   return {
     success: true,
     data: {
-      orders,
+      users,
       pagination: {
         page,
         limit,
@@ -53,112 +95,3 @@ export async function listVendorOrdersService(
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🔹 GET SINGLE VENDOR ORDER (GET /vendor/orders/:id)
-// ─────────────────────────────────────────────────────────────
-
-export async function getVendorOrderService(
-  orderId: string,
-  organizationId: string,
-  t?: (key: string, params?: any) => string
-): Promise<{ success: true; data: VendorOrderDetailResponse }> {
-  
-  const order = await findVendorOrderById(orderId, organizationId);
-
-  if (!order) {
-    throw new NotFoundError(
-      t?.("vendor.order_not_found", { ns: "errors" }) || "Order not found in your store"
-    );
-  }
-
-  return {
-    success: true,
-    data: order,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────
-// 🔹 UPDATE ORDER STATUS (PATCH /vendor/orders/:id/status)
-// ─────────────────────────────────────────────────────────────
-
-export async function updateVendorOrderStatusService(
-  orderId: string,
-  organizationId: string,
-  input: UpdateOrderStatusInput,
-  actorUserId: string,
-  t?: (key: string, params?: any) => string
-): Promise<{ success: true; data: { orderId: string; newStatus: string } }> {
-  
-  // ✅ Define allowed status transitions (State Machine)
-  const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-    'pending': ['accepted', 'cancelled'],
-    'accepted': ['packed', 'cancelled'],
-    'packed': ['shipped', 'cancelled'],
-    'shipped': ['delivered'],
-    'delivered': [], // Terminal state
-    'cancelled': [], // Terminal state
-    'refunded': [],  // Terminal state
-  };
-
-  // 1) Fetch current order to validate transition
-  const currentOrder = await findVendorOrderById(orderId, organizationId);
-  
-  if (!currentOrder) {
-    throw new NotFoundError(
-      t?.("vendor.order_not_found", { ns: "errors" }) || "Order not found in your store"
-    );
-  }
-
-  // 2) Validate state transition
-  const allowedNextStates = ALLOWED_TRANSITIONS[currentOrder.status];
-  if (!allowedNextStates || !allowedNextStates.includes(input.newStatus)) {
-    throw new ValidationError(
-      t?.("vendor.invalid_status_transition", { 
-        ns: "errors", 
-        params: { from: currentOrder.status, to: input.newStatus } 
-      }) || `Cannot transition from '${currentOrder.status}' to '${input.newStatus}'`,
-      { field: "status", code: "invalid_transition" }
-    );
-  }
-
-  // 3) Prevent cancelling delivered orders
-  if (currentOrder.status === 'delivered' && input.newStatus === 'cancelled') {
-    throw new ValidationError(
-      t?.("vendor.cannot_cancel_delivered", { ns: "errors" }) || "Cannot cancel a delivered order",
-      { field: "status", code: "invalid_state" }
-    );
-  }
-
-  // 4) Execute update (with audit logging inside repo)
-  const updatedOrder = await updateVendorOrderStatus(
-    orderId,
-    organizationId,
-    input.newStatus,
-    actorUserId,
-    input.note
-  );
-
-  // 5) Log the action (non-blocking)
-  await AuditService.log({
-    actorUserId,
-    organizationId,
-    action: "VENDOR_ORDER_STATUS_UPDATED",
-    entityType: "vendor_order",
-    entityId: orderId,
-    oldValues: { status: currentOrder.status },
-    newValues: { status: input.newStatus, note: input.note },
-    metadata: {
-      orderNumber: currentOrder.orderNumber,
-      previousStatus: currentOrder.status,
-      newStatus: input.newStatus,
-    },
-  }).catch((err: Error) => console.error("Audit log failed:", err));
-
-  return {
-    success: true,
-    data: {
-      orderId,
-      newStatus: input.newStatus,
-    },
-  };
-}

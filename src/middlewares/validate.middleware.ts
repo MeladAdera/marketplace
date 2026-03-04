@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { AnyZodObject, ZodError } from "zod";
 
+// ✅ أضف هذا الـ Type
+export interface ValidatedRequest extends Request {
+  query: any; // After validation, query can be any validated type
+  body: any;  // After validation, body can be any validated type
+  params: any; // After validation, params can be any validated type
+}
+
 type SchemaInput =
   | AnyZodObject
   | {
@@ -17,13 +24,13 @@ export const validate = (schema: SchemaInput) => {
   ): Promise<void> => {
     try {
       if ("parseAsync" in schema) {
-  await schema.parseAsync({
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    cookies: req.cookies ?? {},   
-    headers: req.headers ?? {},  
-  });
+        await schema.parseAsync({
+          body: req.body,
+          query: req.query,
+          params: req.params,
+          cookies: req.cookies ?? {},
+          headers: req.headers ?? {},
+        });
       } else {
         if (schema.body) {
           req.body = await schema.body.parseAsync(req.body);
