@@ -78,3 +78,51 @@ export const vendorAdminValidations = {
   getVendorStatistics: getVendorStatisticsSchema,
   listVendorUsers: listVendorUsersSchema,
 };
+// ─────────────────────────────────────────────────────────────
+// 🔹 GET /vendor/users/:id - VALIDATION
+// ─────────────────────────────────────────────────────────────
+
+export const getVendorUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid user ID format"),
+  }),
+});
+// ─────────────────────────────────────────────────────────────
+// 🔹 PATCH /vendor/users/:id/block - VALIDATION
+// ─────────────────────────────────────────────────────────────
+
+export const blockUserSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid user ID format"),
+  }),
+  body: z.object({
+    blocked: z.boolean({
+      errorMap: () => ({ message: "'blocked' must be a boolean (true or false)" })
+    }),
+    reason: z.string()
+      .max(500, "Reason cannot exceed 500 characters")
+      .optional()
+      .or(z.literal("")).optional(),  // Allow empty string
+  }),
+});
+// ─────────────────────────────────────────────────────────────
+// 🔹 PATCH /vendor/users/:id/role - VALIDATION
+// ⚠️ Only allows downgrade to 'vendor_staff' (security)
+// ─────────────────────────────────────────────────────────────
+
+export const updateUserRoleSchema = z.object({
+  params: z.object({
+    id: z.string().uuid("Invalid user ID format"),
+  }),
+  body: z.object({
+    newRole: z.literal('vendor_staff', {
+      errorMap: () => ({ 
+        message: "Can only change role to 'vendor_staff'. Contact platform admin for role elevation." 
+      })
+    }),
+    reason: z.string()
+      .max(500, "Reason cannot exceed 500 characters")
+      .optional()
+      .or(z.literal("")).optional(),
+  }),
+});

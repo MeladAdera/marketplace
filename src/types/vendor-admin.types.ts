@@ -273,15 +273,22 @@ export interface VendorUserSummary {
   role: 'vendor_admin' | 'vendor_staff';
   isActive: boolean;
   createdAt: Date;
-  lastLoginAt?: Date | null;          // Nullable: user may never have logged in
+  lastLoginAt?: Date | null;
   
   // Who invited this user? (useful for audit)
   invitedBy?: {
     id: UUID;
     email: string;
   } | null;
-}
 
+  // ✅ NEW: Blocking status fields (أضف هذا)
+  blocked?: boolean;              // true = explicitly blocked by admin
+  blockedAt?: Date | null;        // When was blocked (null if not blocked)
+  blockedBy?: {                   // Who blocked this user (for audit)
+    id: UUID;
+    email: string;
+  } | null;
+}
 export interface VendorUserListResponse {
   success: true;
   data: {

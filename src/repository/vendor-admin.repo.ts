@@ -255,7 +255,6 @@ export async function findVendorUsersByOrgId(
   // Fetch users with pagination
   const offset = (page - 1) * limit;
   params.push(limit, offset);
-
   const usersResult = await pool.query(
     `
     SELECT 
@@ -265,9 +264,18 @@ export async function findVendorUsersByOrgId(
       u.is_active,
       u.created_at,
       u.last_login_at,
+      
+      -- ✅ NEW: Blocking fields
+      u.blocked,
+      u.blocked_at,
+      blocker.id AS blocked_by_id,
+      blocker.email AS blocked_by_email,
+      
+      -- Existing: invited by
       inviter.id AS invited_by_id,
       inviter.email AS invited_by_email
     FROM users u
+    LEFT JOIN users blocker ON u.blocked_by = blocker.id  -- ✅ NEW JOIN
     LEFT JOIN users inviter ON u.invited_by_id = inviter.id
     WHERE ${whereClause}
     ORDER BY u.created_at DESC
@@ -283,6 +291,16 @@ export async function findVendorUsersByOrgId(
     isActive: row.is_active,
     createdAt: row.created_at,
     lastLoginAt: row.last_login_at,
+    
+    // ✅ NEW: Map blocking fields
+    blocked: row.blocked,
+    blockedAt: row.blocked_at,
+    blockedBy: row.blocked_by_id ? {
+      id: row.blocked_by_id,
+      email: row.blocked_by_email,
+    } : null,
+    
+    // Existing: invited by
     invitedBy: row.invited_by_id ? {
       id: row.invited_by_id,
       email: row.invited_by_email,
@@ -290,4 +308,254 @@ export async function findVendorUsersByOrgId(
   }));
 
   return { users, total };
+}
+// ─────────────────────────────────────────────────────────────
+// 🔹 GET /vendor/users/:id - REPOSITORY
+// ✅ Multi-tenant scoped: only returns user if belongs to organization
+// ─────────────────────────────────────────────────────────────
+
+// في src/repository/vendor-admin.repo.ts
+
+export async function findVendorUserById(
+  userId: UUID,
+  organizationId: UUID
+): Promise<VendorUserSummary | null> {
+  
+  const query = `
+    SELECT 
+      u.id,
+      u.email,
+      u.role,
+      u.is_active,
+      u.created_at,
+      u.last_login_at,
+      
+      -- ✅ Blocking fields
+      u.blocked,
+      u.blocked_at,
+      blocker.id AS blocked_by_id,
+      blocker.email AS blocked_by_email,
+      
+      -- Invited by
+      inviter.id AS invited_by_id,
+      inviter.email AS invited_by_email
+    FROM users u
+    LEFT JOIN users blocker ON u.blocked_by = blocker.id
+    LEFT JOIN users inviter ON u.invited_by_id = inviter.id
+    WHERE u.id = $1 AND u.organization_id = $2
+    LIMIT 1
+  `;
+
+  const result = await pool.query(query, [userId, organizationId]);
+  
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+
+  return {
+    id: row.id,
+    email: row.email,
+    role: row.role,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+    lastLoginAt: row.last_login_at,
+    
+    // ✅ Map blocking fields
+    blocked: row.blocked,
+    blockedAt: row.blocked_at,
+    blockedBy: row.blocked_by_id ? {
+      id: row.blocked_by_id,
+      email: row.blocked_by_email,
+    } : null,
+    
+    // Map invited by
+    invitedBy: row.invited_by_id ? {
+      id: row.invited_by_id,
+      email: row.invited_by_email,
+    } : null,
+  };
+}
+// ─────────────────────────────────────────────────────────────
+// 🔹 PATCH /vendor/users/:id/block - REPOSITORY (FIXED)
+// ─────────────────────────────────────────────────────────────
+
+export async function blockUserInOrg(
+  targetUserId: UUID,
+  organizationId: UUID,
+  blockedByUserId: UUID,
+  blocked: boolean,
+  reason?: string,
+  client?: PoolClient
+): Promise<{ 
+  userId: UUID; 
+  email: string; 
+  isBlocked: boolean; 
+  blockedAt: Date | null 
+}> {
+  
+  const runner = client || pool;
+
+  // ── 1) Safety Check: Cannot block yourself ─────────────────
+  if (targetUserId === blockedByUserId) {
+    throw new Error("CANNOT_BLOCK_SELF");
+  }
+
+  // ── 2) Safety Check: Cannot block the last vendor_admin ───
+  if (blocked) {
+    const adminCountResult = await runner.query(
+      `
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE organization_id = $1
+        AND role = 'vendor_admin'
+        AND is_active = TRUE
+        AND id != $2
+      `,
+      [organizationId, targetUserId]
+    );
+
+    const adminCount = parseInt(adminCountResult.rows[0].count);
+    
+    if (adminCount === 0) {
+      throw new Error("CANNOT_BLOCK_LAST_ADMIN");
+    }
+  }
+
+  // ── 3) Execute Update (FIXED: Restore is_active on unblock) ──
+  const result = await runner.query(
+    `
+    UPDATE users
+    SET 
+      blocked = $1,
+      blocked_at = CASE WHEN $1 = TRUE THEN NOW() ELSE NULL END,
+      blocked_by = CASE WHEN $1 = TRUE THEN $2::uuid ELSE NULL END,
+      
+      -- ✅ FIXED: When blocking → deactivate, When unblocking → reactivate
+      is_active = CASE 
+        WHEN $1 = TRUE THEN FALSE   -- Block: set inactive
+        ELSE TRUE                   -- Unblock: restore active
+      END,
+      
+      updated_at = NOW()
+    WHERE id = $3
+      AND organization_id = $4
+    RETURNING id, email, blocked, blocked_at
+    `,
+    [blocked, blockedByUserId, targetUserId, organizationId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("USER_NOT_FOUND_IN_ORG");
+  }
+
+  const row = result.rows[0];
+
+  return {
+    userId: row.id,
+    email: row.email,
+    isBlocked: row.blocked,
+    blockedAt: row.blocked_at,
+  };
+}
+// ─────────────────────────────────────────────────────────────
+// 🔹 PATCH /vendor/users/:id/role - REPOSITORY
+// Downgrade user role (admin → staff only)
+// ✅ Includes: Self-protection + Last-admin protection
+// ─────────────────────────────────────────────────────────────
+
+export async function downgradeUserRoleInOrg(
+  targetUserId: UUID,
+  organizationId: UUID,
+  actorUserId: UUID,
+  newRole: 'vendor_staff',
+  reason?: string,
+  client?: PoolClient
+): Promise<{ 
+  userId: UUID; 
+  email: string; 
+  oldRole: string; 
+  newRole: string 
+}> {
+  
+  const runner = client || pool;
+
+  // ── 1) Safety Check: Cannot change your own role ───────────
+  if (targetUserId === actorUserId) {
+    throw new Error("CANNOT_CHANGE_OWN_ROLE");
+  }
+
+  // ── 2) Fetch Current Role ──────────────────────────────────
+  const currentResult = await runner.query(
+    `
+    SELECT role, email 
+    FROM users 
+    WHERE id = $1 AND organization_id = $2
+    LIMIT 1
+    `,
+    [targetUserId, organizationId]
+  );
+
+  if (currentResult.rows.length === 0) {
+    throw new Error("USER_NOT_FOUND_IN_ORG");
+  }
+
+  const oldRole = currentResult.rows[0].role;
+  const email = currentResult.rows[0].email;
+
+  // ── 3) Cannot Downgrade Customer ───────────────────────────
+  if (oldRole === 'customer') {
+    throw new Error("CANNOT_DOWNGRADE_CUSTOMER");
+  }
+
+  // ── 4) Already Staff ───────────────────────────────────────
+  if (oldRole === 'vendor_staff') {
+    throw new Error("USER_ALREADY_STAFF");
+  }
+
+  // ── 5) Last Admin Protection ───────────────────────────────
+  if (oldRole === 'vendor_admin') {
+    const adminCountResult = await runner.query(
+      `
+      SELECT COUNT(*) as count
+      FROM users
+      WHERE organization_id = $1
+        AND role = 'vendor_admin'
+        AND is_active = TRUE
+        AND id != $2  -- Exclude target user
+      `,
+      [organizationId, targetUserId]
+    );
+
+    const adminCount = parseInt(adminCountResult.rows[0].count);
+    
+    if (adminCount === 0) {
+      throw new Error("CANNOT_DOWNGRADE_LAST_ADMIN");
+    }
+  }
+
+  // ── 6) Execute Downgrade ───────────────────────────────────
+  const result = await runner.query(
+    `
+    UPDATE users
+    SET 
+      role = $1,
+      updated_at = NOW()
+    WHERE id = $2 
+      AND organization_id = $3 
+      AND role = 'vendor_admin'  -- Ensure we're only downgrading admins
+    RETURNING id, email, role
+    `,
+    [newRole, targetUserId, organizationId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error("ROLE_UPDATE_FAILED");
+  }
+
+  return {
+    userId: result.rows[0].id,
+    email: result.rows[0].email,
+    oldRole,
+    newRole,
+  };
 }

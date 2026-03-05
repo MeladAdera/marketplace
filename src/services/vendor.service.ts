@@ -211,63 +211,6 @@ export async function getVendorProfileService(
   };
 }
 
-// // 3️⃣ Invite new staff
-// export async function inviteStaffService(
-//   organizationId: string,
-//   input: InviteStaffInput,
-//   invitedBy: string,
-// ): Promise<InviteStaffResponse> {
-//   const { email, role } = input;
-
-//   // Verify that email is not used in this organization
-//   const existingUser = await findUserByEmailAndOrganization(
-//     email,
-//     organizationId,
-//   );
-//   if (existingUser) {
-//     throw new Error("USER_ALREADY_IN_ORGANIZATION");
-//   }
-
-//   // Verify that email is not used in another organization
-//   const userElsewhere = await findUserByEmail(email);
-//   if (userElsewhere) {
-//     throw new Error("EMAIL_ALREADY_REGISTERED");
-//   }
-
-//   // Create temporary password
-//   const tempPassword = Math.random().toString(36).slice(-8);
-//   const passwordHash = await bcrypt.hash(tempPassword, 10);
-
-//   // Create new user
-//   const user = await createUser({
-//     email,
-//     passwordHash,
-//     role: role as UserRole,
-//     organizationId,
-//   });
-//   await createAuditLog({
-//   actorUserId: invitedBy,
-//   organizationId,
-//   action: 'STAFF_INVITED',
-//   entityType: 'user',
-//   entityId: user.id,
-//   newValues: {
-//     email: user.email,
-//     role: user.role
-//   }
-// });
-
-//   // TODO: Send invitation email with temporary password
-//   console.log(`Invitation sent to ${email} with password: ${tempPassword}`);
-
-//   return {
-//     id: user.id,
-//     email: user.email,
-//     role: user.role,
-//     status: "pending", // Default, will change after first login
-//     invitedAt: new Date(),
-//   };
-// }
 
 // 5️⃣ Update company profile
 export async function updateVendorProfileService(

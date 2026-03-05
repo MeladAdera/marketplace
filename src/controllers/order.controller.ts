@@ -68,7 +68,6 @@ export const refundOrderController = asyncHandler(async (req: AuthRequest, res: 
   const adminUserId = req.user!.id;
   const t = req.t;
 const { id } = req.params as { id: string };
-console.log(id ,"hello mother faucker ");
 
 
   const result = await refundOrderService(id, adminUserId, req.body, t);

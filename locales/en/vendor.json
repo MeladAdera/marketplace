@@ -23,5 +23,16 @@
   "invitation_already_exists": "A pending invitation already exists for {{email}}",
   "invitation_not_found": "Invitation not found or has been revoked",
   "invitation_expired": "This invitation has expired",
-  "invitation_already_accepted": "This invitation has already been accepted"
+  "invitation_already_accepted": "This invitation has already been accepted",
+    "user_blocked": "User has been blocked successfully",
+  "user_unblocked": "User has been unblocked successfully",
+  "role_updated": "User role has been updated successfully",
+  "user_removed": "User has been removed from the organization",
+  "user_deactivated": "User account has been deactivated (last admin protection)",
+  
+  "cannot_block_self": "You cannot block yourself",
+  "cannot_block_last_admin": "Cannot block the last administrator in your organization",
+  "cannot_change_own_role": "You cannot change your own role",
+  "invite.invitation_already_exists": "An active invitation already exists for this email",
+  "invite.race_condition": "An invitation was just created by another request. Please refresh"
 }
