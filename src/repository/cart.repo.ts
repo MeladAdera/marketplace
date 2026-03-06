@@ -1,7 +1,6 @@
 // src/repository/cart.repo.ts
 import pool from "../db/database";
 import { 
-  CartItem, 
   CartItemWithDetails, 
   AddToCartInput, 
   UpdateCartItemInput,
