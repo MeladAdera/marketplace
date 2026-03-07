@@ -13,7 +13,6 @@ import {
 
 const router = Router();
 
-// ✅ كل الـ routes تحت /vendor محمية بـ auth + rbac
 router.use(authMiddleware);
 router.use(rbacMiddleware(['vendor_admin', 'vendor_staff']));
 
