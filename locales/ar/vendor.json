@@ -23,5 +23,28 @@
   "invitation_already_exists": "يوجد دعوة معلقة مسبقاً للبريد {{email}}",
   "invitation_not_found": "الدعوة غير موجودة أو تم إلغاؤها",
   "invitation_expired": "انتهت صلاحية هذه الدعوة",
-  "invitation_already_accepted": "تم قبول هذه الدعوة مسبقاً"
+  "invitation_already_accepted": "تم قبول هذه الدعوة مسبقاً",
+    "user_blocked": "تم حظر المستخدم بنجاح",
+  "user_unblocked": "تم إلغاء حظر المستخدم بنجاح",
+  "role_updated": "تم تغيير صلاحيات المستخدم بنجاح",
+  "user_removed": "تمت إزالة المستخدم من المنظمة",
+  "user_deactivated": "تم تعطيل حساب المستخدم (حماية آخر مسؤول)",
+  
+  "cannot_block_self": "لا يمكنك حظر نفسك",
+  "cannot_block_last_admin": "لا يمكن حظر آخر مسؤول في المنظمة",
+  "cannot_change_own_role": "لا يمكنك تغيير صلاحياتك الخاصة",
+  "cannot_downgrade_last_admin": "لا يمكن تخفيض صلاحيات آخر مسؤول في المنظمة",
+  "cannot_downgrade_customer": "لا يمكن تغيير صلاحيات حساب عميل",
+  "cannot_remove_self": "لا يمكنك إزالة نفسك من المنظمة",
+  
+  "user_already_staff": "المستخدم כבר موظف في المنظمة",
+  "user_not_found": "المستخدم غير موجود في منظمتك",
+  
+  "invite.permission_denied": "فقط مديرو البائع يمكنهم دعوة أعضاء جدد",
+  "invite.cannot_invite_admin": "لا يمكنك دعوة مسؤول آخر. يرجى التواصل مع دعم المنصة",
+  "invite.user_already_active": "هذا المستخدم כבר عضو نشط في منظمتك",
+  "invite.user_already_invited": "تمت دعوة هذا المستخدم من قبل ولم يقبل بعد",
+  "invite.invitation_already_exists": "يوجد دعوة معلقة مسبقاً لهذا البريد",
+  "invite.race_condition": "تم إنشاء دعوة بواسطة طلب آخر. يرجى تحديث الصفحة"
+
 }

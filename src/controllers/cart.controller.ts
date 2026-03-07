@@ -1,5 +1,5 @@
 // src/controllers/cart.controller.ts
-import { Request, Response } from "express";
+import { Response } from "express";
 import { asyncHandler } from "../middlewares/errorHandler.middleware";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { 
@@ -16,9 +16,8 @@ import {
  */
 export const getCartController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t; // i18n function from middleware
 
-  const cart = await getCartService(userId, t);
+  const cart = await getCartService(userId);
 
   return res.status(200).json({
     success: true,
@@ -34,7 +33,7 @@ export const addToCartController = asyncHandler(async (req: AuthRequest, res: Re
   const userId = req.user!.id;
   const t = req.t;
 
-  const cartItem = await addToCartService(userId, req.body, t);
+  const cartItem = await addToCartService(userId, req.body);
 
   return res.status(200).json({
     success: true,
@@ -52,9 +51,9 @@ export const addToCartController = asyncHandler(async (req: AuthRequest, res: Re
 export const updateCartItemController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
   const t = req.t;
-const { id } = req.params as { id: string };
+  const { id } = req.params as { id: string };
 
-  const cartItem = await updateCartItemService(userId, id, req.body, t);
+  const cartItem = await updateCartItemService(userId, id, req.body);
 
   return res.status(200).json({
     success: true,
@@ -71,10 +70,9 @@ const { id } = req.params as { id: string };
  */
 export const removeCartItemController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t;
-const { id } = req.params as { id: string };
+  const { id } = req.params as { id: string };
 
-  const result = await removeCartItemService(userId, id, t);
+  const result = await removeCartItemService(userId, id);
 
   return res.status(200).json({
     success: true,
@@ -88,9 +86,8 @@ const { id } = req.params as { id: string };
  */
 export const clearCartController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t;
 
-  const result = await clearCartService(userId, t);
+  const result = await clearCartService(userId);
 
   return res.status(200).json({
     success: true,

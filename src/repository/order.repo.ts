@@ -6,7 +6,6 @@ import {
   OrderWithDetailsResponse,
   OrderSummaryResponse,
   VendorOrderWithItemsResponse,
-  OrderItemWithVariantResponse,
   // Internal Types
   LockedCartItem,
   VendorOrderGroup,
@@ -736,22 +735,22 @@ export async function cancelOrderByCustomerTransaction(
 
     const order = orderResult.rows[0];
 
-    // 🔐 تأكد أن الطلب لهذا المستخدم
+    // 🔐 check if this order to this user 
     if (order.customer_user_id !== customerUserId) {
       throw new Error("ORDER_NOT_OWNED");
     }
 
-    // ❌ إذا كان مشحون
+    // ❌  check if this  order is shipped 
     if (order.status === "shipped") {
       throw new Error("ORDER_ALREADY_SHIPPED");
     }
 
-    // ❌ إذا كان ملغى
+    // ❌ if is cancelled 
     if (order.status === "cancelled") {
       throw new Error("ORDER_ALREADY_CANCELLED");
     }
 
-    // ✅ تحديث الحالة
+    // ✅ refresh 
     await client.query(
       `
       UPDATE orders
@@ -762,9 +761,7 @@ export async function cancelOrderByCustomerTransaction(
       [orderId]
     );
 
-    // 🔁 هنا ممكن تضيف منطق إعادة المخزون إذا موجود عندك
-    // مثال:
-    // await restoreInventory(client, orderId);
+
 
     await client.query("COMMIT");
 

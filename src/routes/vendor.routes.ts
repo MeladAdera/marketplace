@@ -16,7 +16,6 @@ import {
   getInventoryHistoryController,
   checkStockController
 } from "../controllers/inventory.controller";
-// ✅ أضف هذا الاستيراد الجديد
 import {
   inviteStaffController,
   acceptInvitationController,
@@ -45,6 +44,7 @@ import {
   revokeInvitationValidation,
   listInvitationsValidation,
 } from "../validations";
+import { rbacMiddleware } from "../middlewares/rbac.middleware";
 
 const router = Router();
 
@@ -65,24 +65,28 @@ router.patch("/me", validate(updateVendorValidation), updateVendorProfileControl
 // ─────────────────────────────────────────────────────────────
 router.post(
   "/users/invite", 
+  rbacMiddleware(['vendor_admin']),
   validate(inviteStaffValidation), 
   inviteStaffController
 );
 
 router.get(
-  "/invitations", 
+  "/invitations",
+  rbacMiddleware(['vendor_admin']), 
   validate(listInvitationsValidation), 
   listInvitationsController
 );
 
 router.delete(
   "/invitations/:id", 
+  rbacMiddleware(['vendor_admin']),
   validate(revokeInvitationValidation), 
   revokeInvitationController
 );
 
 router.post(
-  "/invitations/accept", 
+  "/invitations/accept",
+  rbacMiddleware(['vendor_admin']), 
   validate(acceptInvitationValidation), 
   acceptInvitationController
 );
