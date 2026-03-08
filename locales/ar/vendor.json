@@ -46,5 +46,4 @@
   "invite.user_already_invited": "تمت دعوة هذا المستخدم من قبل ولم يقبل بعد",
   "invite.invitation_already_exists": "يوجد دعوة معلقة مسبقاً لهذا البريد",
   "invite.race_condition": "تم إنشاء دعوة بواسطة طلب آخر. يرجى تحديث الصفحة"
-
 }

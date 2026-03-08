@@ -62,7 +62,8 @@ export const getOrderController = asyncHandler(async (req: AuthRequest, res: Res
  */
 export const refundOrderController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const adminUserId = req.user!.id;
-  const { id } = req.params as { id: string };
+  const t = req.t;
+const { id } = req.params as { id: string };
 
   const result = await refundOrderService(id, adminUserId, req.body);
 
