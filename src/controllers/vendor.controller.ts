@@ -10,7 +10,6 @@ import {
 } from "../services/vendor.service";
 import { 
   RegisterVendorInput, 
-  InviteStaffInput,
   VendorProductFilters, 
   UpdateVendorInput
 } from "../types/vendor.types";
