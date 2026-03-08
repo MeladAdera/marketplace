@@ -43,7 +43,6 @@ import {
   listInvitationsValidation,
 } from "../validations";
 
-// ✅ استيرادات النظام الجديد
 import { authorize } from "../middlewares/authorize.middleware";
 import { Permission } from "../constants/permissions";
 

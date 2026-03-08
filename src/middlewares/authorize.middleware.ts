@@ -1,5 +1,5 @@
 // src/middlewares/authorize.middleware.ts
-// ✅ ميدل وير مرن للتحقق من الصلاحيات والسياسات
+// Flexible, policy-aware authorization middleware for fine-grained access control
 
 import { Response, NextFunction } from "express";
 import { AuthRequest } from "./auth.middleware";
@@ -7,23 +7,31 @@ import { Permission, UserRole } from "../constants/permissions";
 import { AuthorizationService } from "../services/authorization.service";
 import { ForbiddenError } from "../errors/AppError";
 
-// دالة مساعدة للتحقق من أن القيمة من نوع Permission
+/**
+ * Type guard to validate that a string is a valid Permission enum value.
+ * Provides runtime safety for dynamically provided permissions.
+ */
 function isValidPermission(value: string): value is Permission {
   return Object.values(Permission).includes(value as Permission);
 }
 
 /**
- * 🎯 الميدل وير الرئيسي للتحقق من الصلاحيات
+ * Authorization middleware factory.
  * 
- * @param permission الصلاحية المطلوبة (أو مصفوفة منها)
- * @param options خيارات إضافية:
- *   - requireAll: إذا كانت مصفوفة، هل يجب أن يملك كلها أم واحدة تكفي؟
- *   - condition: دالة شرطية ديناميكية (مثلاً: التحقق من ملكية المورد)
+ * Enforces permission-based access control with optional dynamic policy conditions.
+ * Supports single or multiple permissions, with configurable logical operators.
  * 
- * @example
+ * @param permission - Required permission(s) to access the route
+ * @param options.requireAll - If true, user must have ALL permissions; if false, ANY suffices
+ * @param options.condition - Optional async function for context-aware policy checks
+ * 
+ * @example Basic permission check
+ * ```ts
  * router.patch("/products/:id", authorize(Permission.PRODUCT_UPDATE));
+ * ```
  * 
- * @example مع شرط ديناميكي
+ * @example With dynamic ownership policy
+ * ```ts
  * router.patch("/products/:id", 
  *   authorize(Permission.PRODUCT_UPDATE, {
  *     condition: async (req) => {
@@ -33,6 +41,7 @@ function isValidPermission(value: string): value is Permission {
  *     }
  *   })
  * );
+ * ```
  */
 export const authorize = (
   permission: Permission | Permission[],
@@ -44,22 +53,22 @@ export const authorize = (
   return async (req: AuthRequest, res: Response, next: NextFunction) => {
     const user = req.user;
     
-    // 1. تحقق أساسي: هل المستخدم موجود؟
+    // Ensure user is authenticated before checking permissions
     if (!user?.role) {
       throw new ForbiddenError("Authentication required");
     }
 
-    // 2. تحويل الصلاحية لمصفوفة لتسهيل المعالجة
+    // Normalize permission input to array for consistent processing
     const permissions = Array.isArray(permission) ? permission : [permission];
     
-    // 3. تحقق من نوع الصلاحيات (لأمان إضافي)
+    // Filter out invalid permissions to catch configuration errors early
     const validPermissions = permissions.filter(isValidPermission);
     if (validPermissions.length === 0) {
       console.error("Invalid permission provided:", permissions);
       throw new ForbiddenError("Configuration error: invalid permission");
     }
 
-    // 4. التحقق من أن الدور يملك الصلاحية المطلوبة
+    // Check if user's role grants the required permission(s)
     const hasAccess = AuthorizationService.hasPermissions(
       user.role as UserRole,
       validPermissions,
@@ -70,8 +79,7 @@ export const authorize = (
       throw new ForbiddenError("You do not have permission to access this resource");
     }
 
-    // 5. ✅ التحقق من الشرط الديناميكي (إذا وُجد)
-    //    هذا هو المكان الذي نتحقق فيه من ملكية المورد، الحالة، إلخ.
+    // Evaluate optional dynamic policy condition (e.g., resource ownership, business rules)
     if (options?.condition) {
       try {
         const conditionMet = await options.condition(req);
@@ -79,8 +87,7 @@ export const authorize = (
           throw new ForbiddenError("Access denied by policy");
         }
       } catch (error) {
-        // إذا كان الخطأ بالفعل ForbiddenError، نرميه كما هو
-        // إذا كان خطأ آخر (مثل قاعدة بيانات)، نعالجه بأمان
+        // Re-throw known authorization errors; wrap unexpected errors safely
         if (error instanceof ForbiddenError) {
           throw error;
         }
@@ -89,7 +96,7 @@ export const authorize = (
       }
     }
 
-    // 6. ✅ كل شيء جيد، نكمل
+    // All checks passed; proceed to route handler
     return next();
   };
 };

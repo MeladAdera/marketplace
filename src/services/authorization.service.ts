@@ -1,5 +1,6 @@
 // src/services/authorization.service.ts
-// ✅ خدمة مركزية للتحقق من الصلاحيات والسياسات
+// Centralized service for permission validation and policy enforcement
+// Provides reusable, testable authorization logic decoupled from HTTP layer
 
 import { UserRole, Permission, ROLE_PERMISSIONS, hasPermission } from '../constants/permissions';
 import { ForbiddenError } from '../errors/AppError';
@@ -7,20 +8,23 @@ import { ForbiddenError } from '../errors/AppError';
 export class AuthorizationService {
   
   /**
-   * ✅ التحقق من أن الدور يملك صلاحية معينة
-   * @param role دور المستخدم
-   * @param permission الصلاحية المطلوبة
-   * @returns true إذا كان يملك الصلاحية
+   * Checks if a given role possesses a specific permission.
+   * 
+   * @param role - The user's role to evaluate
+   * @param permission - The permission to check against
+   * @returns true if the role is granted the permission, false otherwise
    */
   static hasPermission(role: UserRole, permission: Permission): boolean {
     return hasPermission(role, permission);
   }
 
   /**
-   * ✅ التحقق من عدة صلاحيات (كلها أو أي واحدة)
-   * @param role دور المستخدم
-   * @param permissions قائمة الصلاحيات
-   * @param requireAll إذا true: يجب أن يملك كلها، إذا false: يكفي واحدة
+   * Checks if a given role possesses a set of permissions.
+   * 
+   * @param role - The user's role to evaluate
+   * @param permissions - Array of permissions to validate
+   * @param requireAll - If true, role must have ALL permissions; if false, ANY suffices
+   * @returns true if permission requirements are satisfied
    */
   static hasPermissions(
     role: UserRole,
@@ -34,12 +38,19 @@ export class AuthorizationService {
   }
 
   /**
-   * 🎯 التحقق من ملكية المورد (أهم جزء للأمان!)
-   * يتحقق أن المورد ينتمي لنفس منظمة المستخدم
+   * Enforces resource ownership policy.
    * 
-   * @param userOrganizationId منظمة المستخدم
-   * @param resource أي كائن يحتوي على organization_id
-   * @throws ForbiddenError إذا لم يكن المستخدم يملك المورد
+   * Verifies that a resource belongs to the user's organization,
+   * preventing cross-organization data access (multi-tenancy isolation).
+   * 
+   * @param userOrganizationId - The organization ID of the authenticated user
+   * @param resource - Any entity with an organization_id field to validate
+   * @throws ForbiddenError if resource does not belong to user's organization
+   * 
+   * @example
+   * ```ts
+   * AuthorizationService.assertOwnership(req.user.organization_id, product);
+   * ```
    */
   static assertOwnership<T extends { organization_id: string | null }>(
     userOrganizationId: string,
@@ -51,7 +62,15 @@ export class AuthorizationService {
   }
 
   /**
-   * 🎯 رفع خطأ ممنوع بشكل آمن (دالة مساعدة)
+   * Convenience method to throw a standardized authorization error.
+   * 
+   * @param message - Optional custom error message
+   * @throws ForbiddenError with the provided or default message
+   * 
+   * @example
+   * ```ts
+   * if (!isValid) AuthorizationService.deny("Custom policy violation");
+   * ```
    */
   static deny(message?: string): never {
     throw new ForbiddenError(message ?? "Access denied");
