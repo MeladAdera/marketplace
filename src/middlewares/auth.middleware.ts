@@ -2,12 +2,13 @@
 import { Request, Response, NextFunction } from "express";
 import pool from "../db/database";
 import { hashSessionToken } from "../utils/crypto";
+import { UserRole } from '../constants/permissions';
 
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    role: string;
+    role: UserRole;
     organization_id: string | null;
   };
 }

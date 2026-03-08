@@ -15,9 +15,14 @@ import {
   refundParamsSchema,
   refundSchema,
 } from "../validations/order.validation";
-import { rbacMiddleware } from "../middlewares/rbac.middleware";
+
+// ✅ استيرادات النظام الجديد
+import { authorize } from "../middlewares/authorize.middleware";
+import { Permission } from "../constants/permissions";
+
 import { Router } from "express";
 const router = Router();
+
 router.use(authMiddleware); 
 
 /* =====================================================
@@ -27,28 +32,28 @@ router.use(authMiddleware);
 
 router.post(
   "/",
-  rbacMiddleware(["customer"]),
+  authorize(Permission.ORDER_CREATE),
   validate({ body: checkoutSchema }),
   checkoutController
 );
 
 router.get(
   "/",
-  rbacMiddleware(["customer"]),
+  authorize(Permission.ORDER_READ),
   validate(listOrdersSchema),
   listOrdersController
 );
 
 router.get(
   "/:id",
-  rbacMiddleware(["customer"]),
+  authorize(Permission.ORDER_READ),
   validate({ params: getOrderParamsSchema }),
   getOrderController
 );
 
 router.post(
   "/:id/cancel",
-  rbacMiddleware(["customer"]),
+  authorize(Permission.ORDER_UPDATE),
   validate({ params: getOrderParamsSchema }),
   cancelOrderController
 );
@@ -60,7 +65,7 @@ router.post(
 
 router.post(
   "/admin/:id/refund",
-  rbacMiddleware(["platform_admin", "support"]),
+  authorize(Permission.ORDER_REFUND),
   validate({ params: refundParamsSchema }),
   validate({ body: refundSchema }),
   refundOrderController

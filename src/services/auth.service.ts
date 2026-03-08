@@ -3,7 +3,8 @@ import bcrypt from "bcrypt";
 import { createUser, findUserByEmail, findUserById } from "../repository/users.repo";
 import { createSession } from "../repository/sessions.repo";
 import { generateSessionToken, hashSessionToken } from "../utils/crypto";
-import { User, UserRole } from "../types/user.types";  
+import { User } from "../types/user.types";
+import { UserRole } from "../constants/permissions";
 import {
   InvalidCredentialsError,
   UserDisabledError,
@@ -36,11 +37,10 @@ export async function signupService(input: {
   userAgent?: string | null;
 }): Promise<SignupResult> {
   const email = input.email.trim().toLowerCase();
-  const role = input.role || "customer";
-
-  if (!["customer", "vendor_admin", "vendor_staff"].includes(role)) {
-    throw new InvalidRoleError(role);
-  }
+const role = input.role || UserRole.CUSTOMER;
+if (![UserRole.CUSTOMER, UserRole.VENDOR_ADMIN, UserRole.VENDOR_STAFF].includes(role)) {
+  throw new InvalidRoleError(role);
+}
 
   const existing = await findUserByEmail(email);
   if (existing) {

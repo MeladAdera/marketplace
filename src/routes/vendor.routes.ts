@@ -1,3 +1,4 @@
+// src/routes/vendor.routes.ts
 import { Router } from "express";
 import { 
   registerVendorController,
@@ -30,111 +31,143 @@ import {
   inviteStaffValidation,
   getVendorProductsValidation, 
   updateVendorValidation,
-  // Product validations
   createProductValidation,
   updateProductValidation,
   deleteProductValidation,
   getProductByIdValidation,
-  // Inventory validations
   updateStockValidation,
   getInventoryHistoryValidation,
   checkStockValidation,
-  // ✅ أضف هذه الـ validations الجديدة
   acceptInvitationValidation,
   revokeInvitationValidation,
   listInvitationsValidation,
 } from "../validations";
-import { rbacMiddleware } from "../middlewares/rbac.middleware";
+
+// ✅ استيرادات النظام الجديد
+import { authorize } from "../middlewares/authorize.middleware";
+import { Permission } from "../constants/permissions";
 
 const router = Router();
 
-// ✅ Public route
-router.post("/register", validate(registerVendorValidation), registerVendorController);
+// ─────────────────────────────────────────────────────────────
+// ✅ Public route (لا يحتاج مصادقة)
+// ─────────────────────────────────────────────────────────────
+router.post(
+  "/register", 
+  validate(registerVendorValidation), 
+  registerVendorController
+);
 
-// ✅ Protected routes
+// ─────────────────────────────────────────────────────────────
+// ✅ Protected routes (تتطلب مصادقة)
+// ─────────────────────────────────────────────────────────────
 router.use(authMiddleware); 
 
 // ─────────────────────────────────────────────────────────────
-// Vendor Profile
+// 👤 Vendor Profile
 // ─────────────────────────────────────────────────────────────
-router.get("/me", getVendorProfileController);
-router.patch("/me", validate(updateVendorValidation), updateVendorProfileController);
+router.get(
+  "/me", 
+  authorize(Permission.PROFILE_READ), 
+  getVendorProfileController
+);
+
+router.patch(
+  "/me", 
+  authorize(Permission.PROFILE_UPDATE), 
+  validate(updateVendorValidation), 
+  updateVendorProfileController
+);
 
 // ─────────────────────────────────────────────────────────────
-// Vendor Users (Staff Management)
+// 👥 Vendor Users (Staff Management)
 // ─────────────────────────────────────────────────────────────
 router.post(
   "/users/invite", 
-  rbacMiddleware(['vendor_admin']),
+  authorize(Permission.STAFF_INVITE), 
   validate(inviteStaffValidation), 
   inviteStaffController
 );
 
 router.get(
   "/invitations",
-  rbacMiddleware(['vendor_admin']), 
+  authorize(Permission.STAFF_READ), 
   validate(listInvitationsValidation), 
   listInvitationsController
 );
 
 router.delete(
   "/invitations/:id", 
-  rbacMiddleware(['vendor_admin']),
+  authorize(Permission.STAFF_REVOKE), 
   validate(revokeInvitationValidation), 
   revokeInvitationController
 );
 
 router.post(
   "/invitations/accept",
-  rbacMiddleware(['vendor_admin']), 
+  authorize(Permission.STAFF_INVITE), 
   validate(acceptInvitationValidation), 
   acceptInvitationController
 );
 
 // ─────────────────────────────────────────────────────────────
-// Vendor Products
+// 📦 Vendor Products
 // ─────────────────────────────────────────────────────────────
 router.get(
   "/products", 
+  authorize(Permission.PRODUCT_READ), 
   validate(getVendorProductsValidation), 
   getVendorProductsController
 );
+
 router.post(
   "/products", 
+  authorize(Permission.PRODUCT_CREATE), 
   validate(createProductValidation), 
   createProductController
 );
+
 router.get(
   "/products/:id", 
+  authorize(Permission.PRODUCT_READ), 
   validate(getProductByIdValidation), 
   getVendorProductByIdController
 );
+
 router.patch(
   "/products/:id", 
+  authorize(Permission.PRODUCT_UPDATE), 
   validate(updateProductValidation), 
   updateProductController
 );
+
 router.delete(
   "/products/:id", 
+  authorize(Permission.PRODUCT_DELETE), 
   validate(deleteProductValidation), 
   deleteProductController
 );
 
 // ─────────────────────────────────────────────────────────────
-// Vendor Inventory (NEW!)
+// 📊 Vendor Inventory
 // ─────────────────────────────────────────────────────────────
 router.patch(
   "/inventory/:variantId", 
+  authorize(Permission.INVENTORY_UPDATE), 
   validate(updateStockValidation), 
   updateStockController
 );
+
 router.get(
   "/inventory/history", 
+  authorize(Permission.INVENTORY_READ), 
   validate(getInventoryHistoryValidation), 
   getInventoryHistoryController
 );
+
 router.get(
   "/inventory/check", 
+  authorize(Permission.INVENTORY_READ), 
   validate(checkStockValidation), 
   checkStockController
 );

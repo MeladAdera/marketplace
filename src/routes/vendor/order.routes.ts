@@ -1,6 +1,6 @@
+// src/routes/vendor/vendor-order.routes.ts
 import { Router } from "express";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { rbacMiddleware } from "../../middlewares/rbac.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { updateOrderStatusSchema } from "../../validations/vendor-order.validation";
 import {
@@ -9,17 +9,30 @@ import {
   updateVendorOrderStatusController,
 } from "../../controllers/vendor-order.controller";
 
+import { authorize } from "../../middlewares/authorize.middleware";
+import { Permission } from "../../constants/permissions";
+
 const router = Router();
 
 router.use(authMiddleware);
-router.use(rbacMiddleware(['vendor_admin', 'vendor_staff']));
 
-router.get("/orders", listVendorOrdersController);
-router.get("/orders/:id", getVendorOrderController);
+// ── List & Read Orders ──────────────────────────────────────
+router.get(
+  "/orders",
+  authorize(Permission.ORDER_READ),
+  listVendorOrdersController
+);
 
-// ✅ NEW: Update order status with validation
+router.get(
+  "/orders/:id",
+  authorize(Permission.ORDER_READ),
+  getVendorOrderController
+);
+
+
 router.patch(
   "/orders/:id/status",
+  authorize(Permission.ORDER_UPDATE),
   validate(updateOrderStatusSchema),
   updateVendorOrderStatusController
 );
