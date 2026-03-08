@@ -17,6 +17,10 @@ import {
   clearCartSchema,
 } from "../validations/cart.validation";
 
+// ✅ استيرادات النظام الجديد
+import { authorize } from "../middlewares/authorize.middleware";
+import { Permission } from "../constants/permissions";
+
 const router = Router();
 
 // All cart routes require authentication
@@ -27,6 +31,7 @@ router.use(authMiddleware);
  */
 router.get(
   "/",
+  authorize(Permission.CART_READ),
   validate(getCartSchema),
   getCartController
 );
@@ -36,6 +41,7 @@ router.get(
  */
 router.post(
   "/items",
+  authorize(Permission.CART_CREATE),
   validate(addToCartSchema),
   addToCartController
 );
@@ -45,6 +51,7 @@ router.post(
  */
 router.patch(
   "/items/:id",
+  authorize(Permission.CART_UPDATE),
   validate(updateCartItemSchema),
   updateCartItemController
 );
@@ -54,6 +61,7 @@ router.patch(
  */
 router.delete(
   "/items/:id",
+  authorize(Permission.CART_DELETE),
   validate(removeCartItemSchema),
   removeCartItemController
 );
@@ -63,6 +71,7 @@ router.delete(
  */
 router.delete(
   "/",
+  authorize(Permission.CART_DELETE),
   validate(clearCartSchema),
   clearCartController
 );

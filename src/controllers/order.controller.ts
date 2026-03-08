@@ -2,6 +2,7 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/errorHandler.middleware";
 import { AuthRequest } from "../middlewares/auth.middleware";
+
 import {
   cancelOrderByCustomerService,
   checkoutService,
@@ -16,8 +17,8 @@ import {
  */
 export const checkoutController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t;
-  const result = await checkoutService(userId, req.body, t);
+
+  const result = await checkoutService(userId, req.body);
 
   return res.status(201).json(result);
 });
@@ -28,9 +29,7 @@ export const checkoutController = asyncHandler(async (req: AuthRequest, res: Res
  */
 export const listOrdersController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t;
 
-  // Extract query parameters (already validated by Zod middleware)
   const filters = {
     status: req.query.status as string | undefined,
     fromDate: req.query.from_date ? new Date(req.query.from_date as string) : undefined,
@@ -39,7 +38,7 @@ export const listOrdersController = asyncHandler(async (req: AuthRequest, res: R
     limit: req.query.limit ? parseInt(req.query.limit as string) : 20,
   };
 
-  const result = await listOrdersService(userId, filters, t);
+  const result = await listOrdersService(userId, filters);
 
   return res.status(200).json(result);
 });
@@ -50,12 +49,9 @@ export const listOrdersController = asyncHandler(async (req: AuthRequest, res: R
  */
 export const getOrderController = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
-  const t = req.t;
-const { id } = req.params as { id: string };
-console.log('Request params:', req.params);
-console.log('Request ID:', req.params.id);
+  const { id } = req.params as { id: string };
 
-  const result = await getOrderService(id, userId, t);
+  const result = await getOrderService(id, userId);
 
   return res.status(200).json(result);
 });
@@ -69,11 +65,11 @@ export const refundOrderController = asyncHandler(async (req: AuthRequest, res: 
   const t = req.t;
 const { id } = req.params as { id: string };
 
-
-  const result = await refundOrderService(id, adminUserId, req.body, t);
+  const result = await refundOrderService(id, adminUserId, req.body);
 
   return res.status(200).json(result);
 });
+
 /**
  * POST /orders/:id/cancel
  * Customer cancels their own order
@@ -81,10 +77,9 @@ const { id } = req.params as { id: string };
 export const cancelOrderController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
-    const t = req.t;
     const { id } = req.params as { id: string };
 
-    const result = await cancelOrderByCustomerService(id, userId, t);
+    const result = await cancelOrderByCustomerService(id, userId);
 
     return res.status(200).json(result);
   }

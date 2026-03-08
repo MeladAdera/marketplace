@@ -1,3 +1,4 @@
+import { NotFoundError, ValidationError } from "../errors/AppError";
 import {
   // Statistics Repo
   getVendorStatistics,
@@ -15,16 +16,10 @@ import {
   // Users Types
   VendorUserFilters,
   VendorUserListResponse,
-  InviteVendorUserInput,
-  InviteVendorUserResponse,
+
   VendorUserSummary,
 } from "../types/vendor-admin.types";
-import {
-  ValidationError,
-  NotFoundError,
-  ForbiddenError,
-  ConflictError,
-} from "../errors/AppError";
+
 import { AuditService } from "./audit.service";
 
 type UUID = string;
@@ -75,7 +70,7 @@ export async function listVendorUsersService(
   
   // ✅ Validate pagination params
   const page = Math.max(1, filters.page || 1);
-  const limit = Math.min(100, Math.max(1, filters.limit || 20)); // Cap at 100
+  const limit = Math.min(100, Math.max(1, filters.limit || 20)); 
 
   const { users, total } = await findVendorUsersByOrgId(organizationId, {
     ...filters,

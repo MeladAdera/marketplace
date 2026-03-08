@@ -59,9 +59,11 @@ export async function inviteStaffService(
     });
 
     // 4. Mock email sending (replace with actual email service)
-    const inviteLink = `${process.env.FRONTEND_URL}/invite?token=${invitation.plain_token}`;
+     if(process.env.NODE_ENV==="development"){
+          const inviteLink = `${process.env.FRONTEND_URL}/invite?token=${invitation.plain_token}`;
     console.log(`📧 Sending invitation to ${email}`);
     console.log(`🔗 Invite Link: ${inviteLink}`);
+     }
     // TODO: Implement actual email sending with sendGrid, SES, etc.
 
     // 5. Audit log

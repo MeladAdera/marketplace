@@ -7,6 +7,7 @@ import {
   listOrders,
   processRefund,
 } from "../repository/order.repo";
+
 import {
   CheckoutRequest,
   CheckoutResponse,
@@ -15,25 +16,28 @@ import {
   RefundRequest,
   RefundResponse,
 } from "../types/order.types";
+
 import {
   ValidationError,
   NotFoundError,
   ConflictError,
   InternalServerError,
 } from "../errors/AppError";
+
 import { AuditService } from "./audit.service";
 import pool from "../db/database";
 
-// ─────────────────────────────────────────────────────────────
-// 🔹 CHECKOUT SERVICE
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// CHECKOUT SERVICE
+// ─────────────────────────────────────────
 
 export async function checkoutService(
   userId: string,
-  input: CheckoutRequest,
-  t?: (key: string, params?: any) => string
+  input: CheckoutRequest
 ): Promise<CheckoutResponse> {
+
   try {
+
     const result = await createOrderTransaction({
       customerUserId: userId,
       clientRequestId: input.client_request_id,
@@ -44,7 +48,6 @@ export async function checkoutService(
 
     const orderDetails = await getOrderWithDetails(result.orderId, userId);
 
-    // ✅ Audit logs (non-blocking)
     await AuditService.log({
       actorUserId: userId,
       action: "ORDER_CREATED",
@@ -60,77 +63,66 @@ export async function checkoutService(
         paymentMethod: input.payment_method,
         vendorCount: Object.keys(result.vendorOrderIds).length,
       },
-    }).catch((err: Error) => console.error("Audit log failed:", err));
-
-    await AuditService.log({
-      actorUserId: userId,
-      action: "INVENTORY_RESERVED",
-      entityType: "inventory",
-      metadata: {
-        orderId: result.orderId,
-        orderNumber: result.orderNumber,
-      },
-    }).catch((err: Error) => console.error("Audit log failed:", err));
+    }).catch(console.error);
 
     return {
       success: true,
       data: orderDetails,
-      message: t?.("order.created", { ns: "product" }) || "Order placed successfully",
+      message: "order.created",
     };
 
   } catch (error: any) {
+
     if (error.message === "ORDER_ALREADY_EXISTS") {
+
       const existingOrder = await checkIdempotency(input.client_request_id, userId);
-      
+
       if (existingOrder) {
         return {
           success: true,
           data: existingOrder,
-          message: t?.("order.already_exists", { ns: "product" }) || "Order already exists (idempotent response)",
+          message: "order.already_exists",
         };
       }
-      
-      throw new ConflictError(
-        t?.("order.duplicate_request", { ns: "errors" }) || "Duplicate order request"
-      );
+
+      throw new ConflictError("order.duplicate_request");
     }
 
     if (error.message === "CART_EMPTY") {
-      // ✅ FIXED: Pass object instead of string
       throw new ValidationError(
-        t?.("cart.empty", { ns: "errors" }) || "Your cart is empty",
+        "cart.empty",
+        undefined,
         { field: "cart", code: "empty" }
       );
     }
 
     if (error.message === "INSUFFICIENT_STOCK") {
-      // ✅ FIXED: Pass object instead of string
       throw new ValidationError(
-        t?.("inventory.insufficient_stock", { ns: "errors" }) || "One or more items are out of stock",
+        "inventory.insufficient_stock",
+        undefined,
         { field: "items", code: "insufficient_stock" }
       );
     }
 
     if (error.message === "INVENTORY_RESERVATION_FAILED") {
-      throw new InternalServerError(
-        t?.("inventory.reservation_failed", { ns: "errors" }) || "Failed to reserve inventory. Please try again."
-      );
+      throw new InternalServerError("inventory.reservation_failed");
     }
 
     throw error;
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🔹 GET ORDER SERVICE
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// GET ORDER
+// ─────────────────────────────────────────
 
 export async function getOrderService(
   orderId: string,
-  userId: string,
-  t?: (key: string, params?: any) => string
+  userId: string
 ): Promise<{ success: true; data: OrderWithDetailsResponse }> {
+
   try {
+
     const order = await getOrderWithDetails(orderId, userId);
 
     return {
@@ -139,19 +131,18 @@ export async function getOrderService(
     };
 
   } catch (error: any) {
+
     if (error.message === "ORDER_NOT_FOUND") {
-      throw new NotFoundError(
-        t?.("order.not_found", { ns: "errors" }) || "Order not found"
-      );
+      throw new NotFoundError("order.not_found");
     }
 
     throw error;
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🔹 LIST ORDERS SERVICE
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// LIST ORDERS
+// ─────────────────────────────────────────
 
 export async function listOrdersService(
   userId: string,
@@ -161,9 +152,9 @@ export async function listOrdersService(
     toDate?: Date;
     page?: number;
     limit?: number;
-  },
-  t?: (key: string, params?: any) => string
+  }
 ): Promise<OrderListResponse> {
+
   const page = filters.page || 1;
   const limit = filters.limit || 20;
 
@@ -192,19 +183,20 @@ export async function listOrdersService(
   };
 }
 
-// ─────────────────────────────────────────────────────────────
-// 🔹 REFUND SERVICE
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// REFUND ORDER
+// ─────────────────────────────────────────
 
 export async function refundOrderService(
   orderId: string,
   adminUserId: string,
-  input: RefundRequest,
-  t?: (key: string, params?: any) => string
+  input: RefundRequest
 ): Promise<RefundResponse> {
+
   const client = await pool.connect();
 
   try {
+
     await client.query("BEGIN");
 
     const orderCheck = await client.query(
@@ -219,18 +211,17 @@ export async function refundOrderService(
 
     if (orderCheck.rows.length === 0) {
       await client.query("ROLLBACK");
-      throw new NotFoundError(
-        t?.("order.not_found", { ns: "errors" }) || "Order not found"
-      );
+      throw new NotFoundError("order.not_found");
     }
 
     const order = orderCheck.rows[0];
 
     if (order.status === "cancelled") {
       await client.query("ROLLBACK");
-      // ✅ FIXED: Pass object instead of string
+
       throw new ValidationError(
-        t?.("order.already_cancelled", { ns: "errors" }) || "Order already cancelled",
+        "order.already_cancelled",
+        undefined,
         { field: "status", code: "invalid_state" }
       );
     }
@@ -247,16 +238,7 @@ export async function refundOrderService(
       action: "ORDER_REFUNDED",
       entityType: "order",
       entityId: orderId,
-      newValues: {
-        status: "cancelled",
-        refundReason: input.reason.trim(),
-        restockedInventory: input.restock_inventory ?? true,
-      },
-      metadata: {
-        originalAmountCents: order.total_amount_cents,
-        restockedItems: result.restockedItems,
-      },
-    }).catch((err: Error) => console.error("Audit log failed:", err));
+    }).catch(console.error);
 
     return {
       success: true,
@@ -264,50 +246,44 @@ export async function refundOrderService(
         orderId,
         refundProcessed: true,
         restockedItems: result.restockedItems,
-        message: t?.("order.refund_processed", { ns: "product" }) || "Refund processed successfully",
+        message: "order.refund_processed",
       },
     };
 
   } catch (error: any) {
+
     await client.query("ROLLBACK");
 
     if (error.message === "ORDER_NOT_FOUND") {
-      throw new NotFoundError(
-        t?.("order.not_found", { ns: "errors" }) || "Order not found"
-      );
+      throw new NotFoundError("order.not_found");
     }
 
     throw error;
+
   } finally {
     client.release();
   }
 }
-// ─────────────────────────────────────────────────────────────
-// 🔹 CUSTOMER CANCEL ORDER SERVICE
-// ─────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────
+// CUSTOMER CANCEL ORDER
+// ─────────────────────────────────────────
 
 export async function cancelOrderByCustomerService(
   orderId: string,
-  userId: string,
-  t?: (key: string, params?: any) => string
-): Promise<{
-  success: true;
-  data: { orderId: string; status: string };
-}> {
-  try {
-    // Execute repository transaction
-  await cancelOrderByCustomerTransaction(orderId, userId);
+  userId: string
+) {
 
-    // Audit log (non-blocking)
+  try {
+
+    await cancelOrderByCustomerTransaction(orderId, userId);
+
     await AuditService.log({
       actorUserId: userId,
       action: "ORDER_CANCELLED_BY_CUSTOMER",
       entityType: "order",
       entityId: orderId,
-      newValues: {
-        status: "cancelled",
-      },
-    }).catch((err: Error) => console.error("Audit log failed:", err));
+    }).catch(console.error);
 
     return {
       success: true,
@@ -320,23 +296,21 @@ export async function cancelOrderByCustomerService(
   } catch (error: any) {
 
     if (error.message === "ORDER_NOT_FOUND") {
-      throw new NotFoundError(
-        t?.("order.not_found", { ns: "errors" }) || "Order not found"
-      );
+      throw new NotFoundError("order.not_found");
     }
 
     if (error.message === "ORDER_ALREADY_SHIPPED") {
       throw new ValidationError(
-        t?.("order.already_shipped", { ns: "errors" }) ||
-          "Order cannot be cancelled after shipment",
+        "order.already_shipped",
+        undefined,
         { field: "status", code: "invalid_state" }
       );
     }
 
     if (error.message === "ORDER_ALREADY_CANCELLED") {
       throw new ValidationError(
-        t?.("order.already_cancelled", { ns: "errors" }) ||
-          "Order already cancelled",
+        "order.already_cancelled",
+        undefined,
         { field: "status", code: "invalid_state" }
       );
     }

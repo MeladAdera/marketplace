@@ -25,7 +25,6 @@ import {
   VendorProductFilters,
   UpdateVendorInput,
 } from "../types/vendor.types";
-import { UserRole } from "../types/user.types";
 import {
   findProductsByOrganization,
   countProductsByOrganization,
@@ -33,6 +32,7 @@ import {
 } from "../repository/products.repo";
 import { createAuditLog } from "../repository/audit.repo";
 import { Organization } from "../types/organization.types";
+import { UserRole } from '../constants/permissions';
 
 const SESSION_LIFETIME_MINUTES = 30;
 
@@ -151,10 +151,10 @@ export async function getVendorProfileService(
   }
 
   // Get admin (first user in organization)
-  const admins = await findUsersByOrganization(organizationId, {
-    role: "vendor_admin",
-    limit: 1,
-  });
+ const admins = await findUsersByOrganization(organizationId, {
+  role: UserRole.VENDOR_ADMIN,  
+  limit: 1,
+});
   if (admins.length === 0) {
     throw new Error("ADMIN_NOT_FOUND");
   }

@@ -1,48 +1,82 @@
+// src/routes/vendor/vendor-admin.routes.ts
+// Vendor Admin Routes - Using new Permission-based Authorization
+
 import { Router } from "express";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { rbacMiddleware } from "../../middlewares/rbac.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import {
-  // ✅ استيراد الـ Validation Schemas
   getVendorUserSchema,
-  blockUserSchema,  // ✅ الجديد
+  blockUserSchema,
   getVendorStatisticsSchema,
   listVendorUsersSchema,
   updateUserRoleSchema,
 } from "../../validations/vendor-admin.validation";
 import {
-  // ✅ استيراد الـ Controllers
   getVendorUserController,
-  blockVendorUserController,  // ✅ الجديد
+  blockVendorUserController,
   getVendorStatisticsController,
   listVendorUsersController,
   updateVendorUserRoleController,
 } from "../../controllers/vendor-admin.controller";
 
+// ✅ New authorization system imports
+import { authorize } from "../../middlewares/authorize.middleware";
+import { Permission } from "../../constants/permissions";
+
 const router = Router();
 
-// ✅ Auth + RBAC
+// ─────────────────────────────────────────────────────────────
+// Authentication (required for all routes)
+// ─────────────────────────────────────────────────────────────
 router.use(authMiddleware);
 
-// ── Read Operations (Admin + Staff) ─────────────────────────
-router.use(rbacMiddleware(['vendor_admin', 'vendor_staff']));
+// ─────────────────────────────────────────────────────────────
+// 📊 Statistics & Reporting (Read-only)
+// Access: vendor_admin OR vendor_staff (both have VENDOR_STATS_READ)
+// ─────────────────────────────────────────────────────────────
+router.get(
+  "/statistics",
+  authorize(Permission.VENDOR_STATS_READ),
+  validate(getVendorStatisticsSchema),
+  getVendorStatisticsController
+);
 
-router.get("/statistics", validate(getVendorStatisticsSchema), getVendorStatisticsController);
-router.get("/users", validate(listVendorUsersSchema), listVendorUsersController);
-router.get("/users/:id", validate(getVendorUserSchema), getVendorUserController);
+// ─────────────────────────────────────────────────────────────
+// 👥 Staff List & Details (Read-only)
+// Access: vendor_admin OR vendor_staff (both have STAFF_READ)
+// ─────────────────────────────────────────────────────────────
+router.get(
+  "/users",
+  authorize(Permission.STAFF_READ),
+  validate(listVendorUsersSchema),
+  listVendorUsersController
+);
 
-// ── Write Operations (Admin Only) ───────────────────────────
-router.use(rbacMiddleware(['vendor_admin']));  // ✅ Elevate to admin-only
+router.get(
+  "/users/:id",
+  authorize(Permission.STAFF_READ),
+  validate(getVendorUserSchema),
+  getVendorUserController
+);
 
-// ✅ NEW: Block/Unblock User
+// ─────────────────────────────────────────────────────────────
+// 🔐 Staff Management (Write operations - Admin only)
+// Access: vendor_admin ONLY (has STAFF_INVITE, STAFF_REVOKE)
+// Note: VENDOR_STAFF does NOT have these permissions by default
+// ─────────────────────────────────────────────────────────────
+
+// Block/Unblock a staff member
 router.patch(
   "/users/:id/block",
+  authorize(Permission.STAFF_REVOKE), // Revoke access = block
   validate(blockUserSchema),
   blockVendorUserController
 );
-// ✅ NEW: Change User Role (Downgrade only)
+
+// Change staff role (e.g., downgrade from admin to staff)
 router.patch(
   "/users/:id/role",
+  authorize(Permission.STAFF_INVITE), // Managing roles = invite-level permission
   validate(updateUserRoleSchema),
   updateVendorUserRoleController
 );

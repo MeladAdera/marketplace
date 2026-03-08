@@ -48,6 +48,7 @@ export const loginController = asyncHandler(async (req: Request, res: Response) 
   return res.status(200).json({
     success: true,
     message: req.t('login_success', { ns: 'auth' }), 
+    response,
   });
 });
 

@@ -1,8 +1,20 @@
-// src/repository/products.repo.ts
 import pool from "../db/database";
-import { Product, Variant, CreateProductInput, UpdateProductInput, CreateVariantInput } from "../types/product.types";
-let queryCount = 0;
+import { PoolClient } from "pg";
+import {
+  Product,
+  Variant,
+  CreateProductInput,
+  UpdateProductInput,
+  CreateVariantInput
+} from "../types/product.types";
 
+function getDb(client?: PoolClient) {
+  return client ?? pool;
+}
+
+/**
+ * FIND PRODUCTS
+ */
 export async function findProductsByOrganization(
   organizationId: string,
   options?: {
@@ -10,25 +22,19 @@ export async function findProductsByOrganization(
     search?: string;
     limit?: number;
     offset?: number;
-  }
+  },
+  client?: PoolClient
 ): Promise<Product[]> {
 
-  queryCount++;
-  console.log(`🔍 Query #${queryCount}: Fetching Products`);
+  const db = getDb(client);
+
   let query = `
-    SELECT
-      id,
-      organization_id,
-      name,
-      description,
-      active,
-      soft_deleted_at,
-      created_at,
-      updated_at
+    SELECT *
     FROM products
     WHERE organization_id = $1
+    AND soft_deleted_at IS NULL
   `;
-  
+
   const params: any[] = [organizationId];
   let paramCounter = 2;
 
@@ -44,7 +50,6 @@ export async function findProductsByOrganization(
     paramCounter++;
   }
 
-  query += ` AND soft_deleted_at IS NULL`;
   query += ` ORDER BY created_at DESC`;
 
   if (options?.limit) {
@@ -58,20 +63,28 @@ export async function findProductsByOrganization(
     params.push(options.offset);
   }
 
-  const result = await pool.query<Product>(query, params);
+  const result = await db.query<Product>(query, params);
   return result.rows;
 }
 
+/**
+ * COUNT PRODUCTS
+ */
 export async function countProductsByOrganization(
   organizationId: string,
-  options?: { active?: boolean; search?: string }
+  options?: { active?: boolean; search?: string },
+  client?: PoolClient
 ): Promise<number> {
+
+  const db = getDb(client);
+
   let query = `
     SELECT COUNT(*) as count
     FROM products
-    WHERE organization_id = $1 AND soft_deleted_at IS NULL
+    WHERE organization_id = $1
+    AND soft_deleted_at IS NULL
   `;
-  
+
   const params: any[] = [organizationId];
   let paramCounter = 2;
 
@@ -87,36 +100,22 @@ export async function countProductsByOrganization(
     paramCounter++;
   }
 
-  const result = await pool.query(query, params);
+  const result = await db.query(query, params);
   return parseInt(result.rows[0].count);
 }
 
-export async function findVariantsByProductId(productId: string): Promise<Variant[]> {
+/**
+ * CREATE PRODUCT
+ */
+export async function createProduct(
+  input: CreateProductInput,
+  client?: PoolClient
+): Promise<Product> {
 
-  queryCount++;
-  console.log(`🔍 Query #${queryCount}: Fetching Variants for ${productId.length} products`);
-  const query = `
-    SELECT
-      id,
-      product_id,
-      sku,
-      name,
-      price_cents,
-      stock_quantity,
-      active,
-      created_at,
-      updated_at
-    FROM variants
-    WHERE product_id = $1 AND active = true
-    ORDER BY created_at ASC
-  `;
+  const db = getDb(client);
 
-  const result = await pool.query<Variant>(query, [productId]);
-  return result.rows;
-}
-
-export async function createProduct(input: CreateProductInput): Promise<Product> {
-  const query = `
+  const result = await db.query<Product>(
+    `
     INSERT INTO products (
       id,
       organization_id,
@@ -128,164 +127,68 @@ export async function createProduct(input: CreateProductInput): Promise<Product>
     )
     VALUES (
       gen_random_uuid(),
-      $1,
-      $2,
-      $3,
-      $4,
-      NOW(),
-      NOW()
+      $1,$2,$3,$4,NOW(),NOW()
     )
-    RETURNING
-      id,
-      organization_id,
-      name,
-      description,
-      active,
-      soft_deleted_at,
-      created_at,
-      updated_at
-  `;
-
-  const result = await pool.query<Product>(query, [
-    input.organizationId,
-    input.name,
-    input.description || null,
-    input.active !== undefined ? input.active : true
-  ]);
+    RETURNING *
+  `,
+    [
+      input.organizationId,
+      input.name,
+      input.description || null,
+      input.active ?? true
+    ]
+  );
 
   return result.rows[0];
 }
-export async function findProductById(
-  id: string,
-  organizationId?: string
-): Promise<(Product & { variants: Variant[] }) | null> {
-  let query = `
-    SELECT
-      id,
-      organization_id,
-      name,
-      description,
-      active,
-      soft_deleted_at,
-      created_at,
-      updated_at
-    FROM products
-    WHERE id = $1
-  `;
-  
-  const params: any[] = [id];
-  
-  if (organizationId) {
-    query += ` AND organization_id = $2`;
-    params.push(organizationId);
-  }
 
-  query += ` AND soft_deleted_at IS NULL`;
-
-  const result = await pool.query<Product>(query, params);
-  
-  if (result.rows.length === 0) {
-    return null;
-  }
-
-  const product = result.rows[0];
-  const variants = await findVariantsByProductId(id);
-
-  return {
-    ...product,
-    variants
-  };
-}
-
-export async function updateProduct(
-  id: string,
-  organizationId: string,
-  input: UpdateProductInput
-): Promise<Product | null> {
-  // Build dynamic update query
-  const updates: string[] = [];
-  const params: any[] = [];
-  let paramCounter = 1;
-
-  if (input.name !== undefined) {
-    updates.push(`name = $${paramCounter}`);
-    params.push(input.name);
-    paramCounter++;
-  }
-
-  if (input.description !== undefined) {
-    updates.push(`description = $${paramCounter}`);
-    params.push(input.description);
-    paramCounter++;
-  }
-
-  if (input.active !== undefined) {
-    updates.push(`active = $${paramCounter}`);
-    params.push(input.active);
-    paramCounter++;
-  }
-
-  if (input.softDeletedAt !== undefined) {
-    updates.push(`soft_deleted_at = $${paramCounter}`);
-    params.push(input.softDeletedAt);
-    paramCounter++;
-  }
-
-  updates.push(`updated_at = NOW()`);
-
-  const query = `
-    UPDATE products
-    SET ${updates.join(', ')}
-    WHERE id = $${paramCounter} AND organization_id = $${paramCounter + 1} AND soft_deleted_at IS NULL
-    RETURNING
-      id,
-      organization_id,
-      name,
-      description,
-      active,
-      soft_deleted_at,
-      created_at,
-      updated_at
-  `;
-
-  params.push(id, organizationId);
-
-  const result = await pool.query<Product>(query, params);
-  return result.rows[0] || null;
-}
-
-export async function softDeleteProduct(
-  id: string,
-  organizationId: string
-): Promise<boolean> {
-  const query = `
-    UPDATE products
-    SET soft_deleted_at = NOW(), updated_at = NOW()
-    WHERE id = $1 AND organization_id = $2 AND soft_deleted_at IS NULL
-    RETURNING id
-  `;
-
-  const result = await pool.query(query, [id, organizationId]);
-  return result.rows.length > 0;
-}
-
+/**
+ * CREATE VARIANT
+ */
 export async function createVariant(
-  input: CreateVariantInput
+  input: CreateVariantInput,
+  client?: PoolClient
 ): Promise<Variant> {
-  // ✅ Check for duplicate SKU within the same organization
-  const skuCheck = await pool.query(
-    `SELECT v.id 
-     FROM variants v
-     JOIN products p ON p.id = v.product_id
-     WHERE v.sku = $1 AND p.organization_id = $2`,
-    [input.sku, input.organizationId]
-  );
 
-  if (skuCheck.rows.length > 0) {
-    throw new Error(`duplicate key value violates unique constraint "variants_sku_organization_unique"`);
-  }
+  const variants = await createVariants([input], client);
+  return variants[0];
+}
 
-  const query = `
+/**
+ * CREATE MULTIPLE VARIANTS
+ */
+export async function createVariants(
+  variants: CreateVariantInput[],
+  client?: PoolClient
+): Promise<Variant[]> {
+
+  if (!variants.length) return [];
+
+  const db = getDb(client);
+
+  const values: string[] = [];
+  const params: any[] = [];
+
+  variants.forEach((variant, index) => {
+
+    const base = index * 6;
+
+    values.push(
+      `(gen_random_uuid(),$${base+1},$${base+2},$${base+3},$${base+4},$${base+5},$${base+6},NOW(),NOW())`
+    );
+
+    params.push(
+      variant.productId,
+      variant.sku,
+      variant.name || null,
+      variant.priceCents,
+      variant.stockQuantity ?? 0,
+      variant.active ?? true
+    );
+  });
+
+  const result = await db.query<Variant>(
+    `
     INSERT INTO variants (
       id,
       product_id,
@@ -297,64 +200,169 @@ export async function createVariant(
       created_at,
       updated_at
     )
-    VALUES (
-      gen_random_uuid(),
-      $1,
-      $2,
-      $3,
-      $4,
-      $5,
-      $6,
-      NOW(),
-      NOW()
-    )
-    RETURNING
-      id,
-      product_id,
-      sku,
-      name,
-      price_cents,
-      stock_quantity,
-      active,
-      created_at,
-      updated_at
-  `;
+    VALUES ${values.join(",")}
+    RETURNING *
+  `,
+    params
+  );
 
-  const result = await pool.query<Variant>(query, [
-    input.productId,
-    input.sku,
-    input.name || null,
-    input.priceCents,
-    input.stockQuantity || 0,
-    input.active !== undefined ? input.active : true
-  ]);
-
-  return result.rows[0];
+  return result.rows;
 }
 
-
-export async function createVariants(
-  variants: CreateVariantInput[]
-): Promise<Variant[]> {
-  if (variants.length === 0) return [];
-  
-  const results: Variant[] = [];
-  for (const variant of variants) {
-    const result = await createVariant(variant);
-    results.push(result);
-  }
-  return results;
-}
 /**
- * Find variants for multiple products at once (Prevents N+1)
+ * FIND VARIANTS BY PRODUCT IDS
  */
-export async function findVariantsByProductIds(productIds: string[]) {
-  if (productIds.length === 0) return [];
+export async function findVariantsByProductIds(
+  productIds: string[],
+  client?: PoolClient
+): Promise<Variant[]> {
 
-  const { rows } = await pool.query(
-    `SELECT * FROM variants WHERE product_id = ANY($1)`,
+  if (!productIds.length) return [];
+
+  const db = getDb(client);
+
+  const result = await db.query<Variant>(
+    `
+    SELECT *
+    FROM variants
+    WHERE product_id = ANY($1)
+    AND active = true
+    ORDER BY created_at ASC
+  `,
     [productIds]
   );
 
-  return rows;
+  return result.rows;
+}
+
+/**
+ * FIND VARIANTS BY PRODUCT ID
+ */
+export async function findVariantsByProductId(
+  productId: string,
+  client?: PoolClient
+): Promise<Variant[]> {
+
+  const db = getDb(client);
+
+  const result = await db.query<Variant>(
+    `
+    SELECT *
+    FROM variants
+    WHERE product_id = $1
+    AND active = true
+    ORDER BY created_at ASC
+  `,
+    [productId]
+  );
+
+  return result.rows;
+}
+
+/**
+ * FIND PRODUCT BY ID
+ */
+export async function findProductById(
+  id: string,
+  organizationId?: string,
+  client?: PoolClient
+): Promise<(Product & { variants: Variant[] }) | null> {
+
+  const db = getDb(client);
+
+  let query = `
+    SELECT *
+    FROM products
+    WHERE id = $1
+    AND soft_deleted_at IS NULL
+  `;
+
+  const params: any[] = [id];
+
+  if (organizationId) {
+    query += ` AND organization_id = $2`;
+    params.push(organizationId);
+  }
+
+  const result = await db.query<Product>(query, params);
+
+  if (!result.rows.length) return null;
+
+  const product = result.rows[0];
+  const variants = await findVariantsByProductId(id, client);
+
+  return { ...product, variants };
+}
+
+/**
+ * UPDATE PRODUCT
+ */
+export async function updateProduct(
+  id: string,
+  organizationId: string,
+  input: UpdateProductInput,
+  client?: PoolClient
+): Promise<Product | null> {
+
+  const db = getDb(client);
+
+  const updates: string[] = [];
+  const params: any[] = [];
+  let paramCounter = 1;
+
+  if (input.name !== undefined) {
+    updates.push(`name = $${paramCounter++}`);
+    params.push(input.name);
+  }
+
+  if (input.description !== undefined) {
+    updates.push(`description = $${paramCounter++}`);
+    params.push(input.description);
+  }
+
+  if (input.active !== undefined) {
+    updates.push(`active = $${paramCounter++}`);
+    params.push(input.active);
+  }
+
+  updates.push(`updated_at = NOW()`);
+
+  const query = `
+    UPDATE products
+    SET ${updates.join(",")}
+    WHERE id = $${paramCounter}
+    AND organization_id = $${paramCounter + 1}
+    AND soft_deleted_at IS NULL
+    RETURNING *
+  `;
+
+  params.push(id, organizationId);
+
+  const result = await db.query<Product>(query, params);
+
+  return result.rows[0] || null;
+}
+
+/**
+ * SOFT DELETE PRODUCT
+ */
+export async function softDeleteProduct(
+  id: string,
+  organizationId: string,
+  client?: PoolClient
+): Promise<boolean> {
+
+  const db = getDb(client);
+
+  const result = await db.query(
+    `
+    UPDATE products
+    SET soft_deleted_at = NOW(), updated_at = NOW()
+    WHERE id = $1 AND organization_id = $2
+    RETURNING id
+  `,
+    [id, organizationId]
+  );
+
+  return result.rows.length > 0;
 }

@@ -5,17 +5,11 @@ import {
   // Statistics Types
   VendorStatisticsFilters,
   VendorStatisticsResponse,
-  OrderStatusBreakdown,
   TopProductStat,
   // User Types
   VendorUserFilters,
   VendorUserSummary,
-  VendorUserListResponse,
-  InviteVendorUserInput,
-  InviteVendorUserResponse,
 } from "../types/vendor-admin.types";
-import { ConflictError } from "../errors/AppError";
-
 type UUID = string;
 
 // ─────────────────────────────────────────────────────────────

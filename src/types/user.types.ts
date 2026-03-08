@@ -1,19 +1,16 @@
 // src/types/user.types.ts
+import { UserRole } from '../constants/permissions';
 import { Organization } from './organization.types';
 
-export type UserRole = 
-  | 'customer' 
-  | 'vendor_admin' 
-  | 'vendor_staff' 
-  | 'support' 
-  | 'platform_admin';
+
 
 export interface User {
   id: string;                    
   organization_id: string | null; 
   email: string;                  
   password_hash: string;         
-  role: UserRole;                
+  role: UserRole;               
+                
   is_active: boolean;             
   created_at: Date;              
   updated_at: Date;              
@@ -76,3 +73,5 @@ export interface UserFilters {
   page?: number;
   limit?: number;
 }
+
+export { UserRole };

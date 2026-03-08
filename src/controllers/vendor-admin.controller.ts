@@ -40,13 +40,13 @@ export const listVendorUsersController = asyncHandler(
     const organizationId = req.user!.organization_id!;
     const t = req.t;
 
-    const filters = {
-      role: req.query.role as 'vendor_admin' | 'vendor_staff' | undefined,
-      isActive: req.query.active as boolean | undefined,
-      search: req.query.search as string | undefined,
-      page: req.query.page as number,      
-      limit: req.query.limit as number,    
-    };
+  const filters = {
+  role: req.query.role,
+  isActive: req.query.active,
+  search: req.query.search,
+  page: req.query.page,
+  limit: req.query.limit
+};
 
     const result = await listVendorUsersService(organizationId, filters, t);
 
