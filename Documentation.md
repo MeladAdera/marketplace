@@ -21,7 +21,8 @@ Complete technical documentation of how the marketplace backend was built: archi
 13. [Feature: Staff Invitations](#13-feature-staff-invitations)
 14. [Feature: Platform Admin — Vendor Management](#14-feature-platform-admin--vendor-management)
 15. [Feature: Audit Logging](#15-feature-audit-logging)
-16. [API Endpoints Reference](#16-api-endpoints-reference)
+16. [Redis Caching](#16-redis-caching)
+17. [API Endpoints Reference](#17-api-endpoints-reference)
 
 ---
 
@@ -48,6 +49,7 @@ Request → Router → Middleware (auth, validate, authorize) → Controller →
 - **Framework**: Express 5
 - **Language**: TypeScript (strict mode)
 - **Database**: PostgreSQL 15, raw SQL (no ORM)
+- **Cache**: Redis 7 (ioredis)
 - **Validation**: Zod
 - **i18n**: i18next (ar, en, es)
 - **Security**: Helmet, CORS, rate limiting, bcrypt, HTTP-only cookies
@@ -82,7 +84,7 @@ validate(schema) → authMiddleware → authorize(Permission.X) → controller
 ```
 
 - **validate**: Zod schema for `body`, `params`, `query`; returns 400 on failure
-- **authMiddleware**: Reads `session_token` cookie, hashes it, looks up session + user; sets `req.user`
+- **authMiddleware**: Reads `session_token` cookie, hashes it; checks Redis cache for session, else queries `sessions` JOIN `users`; sets `req.user`
 - **authorize**: Checks `req.user.role` against `ROLE_PERMISSIONS`; returns 403 if missing permission
 
 ### Rate Limiters
@@ -106,7 +108,7 @@ validate(schema) → authMiddleware → authorize(Permission.X) → controller
 ### Auth Flow
 
 1. **Login/Signup**: `auth.service` creates user (if signup), creates session, returns token → controller sets cookie
-2. **Protected request**: `authMiddleware` reads cookie → hashes token → queries `sessions` JOIN `users` → sets `req.user`
+2. **Protected request**: `authMiddleware` reads cookie → hashes token → checks Redis cache (`session:{hash}`) → on miss, queries `sessions` JOIN `users` → caches result → sets `req.user`
 3. **Refresh**: `POST /auth/refresh` with cookie → revokes old session, creates new one, sets new cookie
 4. **Logout**: Clears cookie, revokes session (`revoked_at = NOW()`)
 
@@ -509,7 +511,62 @@ AuditService.log({
 
 ---
 
-## 16. API Endpoints Reference
+## 16. Redis Caching
+
+Redis is used to cache read-heavy data and reduce database load. The app degrades gracefully if Redis is unavailable (falls back to DB).
+
+### Setup
+
+- **Docker**: Redis 7 Alpine in `docker-compose.yml` (port 6379)
+- **Env**: `REDIS_URL=redis://localhost:6379` (see `.env.example`)
+- **Client**: `src/db/redis.ts` — ioredis with retry, lazy connect
+- **Health**: `GET /health` returns `redis: "connected" | "disconnected"`
+
+### Cache Service
+
+`src/services/cache.service.ts`:
+
+| Function | Purpose |
+|----------|---------|
+| `cacheGet<T>(key)` | Get value, parse JSON; returns `null` on miss/error |
+| `cacheSet(key, value, ttl?)` | Set with optional TTL (seconds) |
+| `cacheDel(key)` | Delete single key |
+| `cacheDelPattern(pattern)` | Delete keys matching pattern (e.g. `product:list:*`) |
+| `cacheKeys` | Key builders: `publicProduct(id)`, `publicProductList(hash)`, `session(tokenHash)` |
+
+### Cached Data
+
+| Cache | Key | TTL | Invalidation |
+|-------|-----|-----|--------------|
+| **Session** | `session:{tokenHash}` | 30 min | Logout, refresh |
+| **Product list** | `product:list:{md5(filters)}` | 2 min | Product create/update/delete |
+| **Product detail** | `product:public:{id}` | 10 min | Product update/delete |
+
+### Endpoints Affected
+
+- **Session cache**: All protected routes (auth middleware runs first)
+- **Product list**: `GET /products` (query params: page, limit, vendor, min_price, max_price, search)
+- **Product detail**: `GET /products/:id`
+
+### Invalidation
+
+- **Logout** (`POST /auth/logout`): `cacheDel(session:{tokenHash})`
+- **Refresh** (`POST /auth/refresh`): `cacheDel(session:{tokenHash})` for old token
+- **Product create/update/delete**: `cacheDel(product:public:{id})` + `cacheDelPattern(product:list:*)`
+
+### Debug Logs
+
+When testing, `[CACHE]` logs indicate hit/miss/invalidation:
+
+- `[CACHE] session HIT — user: email`
+- `[CACHE] session MISS — fetched from DB, caching for: email`
+- `[CACHE] product detail HIT — id: uuid`
+- `[CACHE] product list MISS — fetching from DB, filters: {...}`
+- `[CACHE] session INVALIDATED — logout`
+
+---
+
+## 17. API Endpoints Reference
 
 ### Auth
 - `POST /auth/login` — body: `{ email, password }`
@@ -541,9 +598,9 @@ AuditService.log({
 - `DELETE /vendors/invitations/:id` — auth
 - `POST /vendors/invitations/accept` — auth, body: `{ token }`
 
-### Public Products
-- `GET /products` — query: `vendorSlug`, `page`, `limit`, `minPrice`, `maxPrice`, `search`
-- `GET /products/:id` — path
+### Public Products (cached)
+- `GET /products` — query: `vendorSlug`, `page`, `limit`, `minPrice`, `maxPrice`, `search` — cached by filters hash
+- `GET /products/:id` — path — cached by product id
 
 ### Cart
 - `GET /cart` — auth
@@ -585,6 +642,7 @@ AuditService.log({
 
 The marketplace backend is a layered Express + TypeScript API with:
 
+- **Redis caching** for sessions, product list, and product detail (graceful fallback if Redis down)
 - **Session-based auth** (HTTP-only cookies, hashed tokens)
 - **RBAC** via roles and granular permissions
 - **Multi-vendor** model: organizations, products, variants, per-vendor orders

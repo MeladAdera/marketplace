@@ -2,6 +2,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import pool from "./db/database";
+import { redisIsReady } from "./db/redis";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import cors from "cors";
@@ -33,22 +34,25 @@ app.use(routes);
 // health check
 app.get("/health", async (req, res) => {
   try {
-    const dbResult = await pool.query("SELECT NOW() as time");
+    const [dbResult, redisOk] = await Promise.all([
+      pool.query("SELECT NOW() as time"),
+      redisIsReady(),
+    ]);
 
     res.json({
       ok: true,
       database: "connected",
-      time: dbResult.rows[0].time
+      redis: redisOk ? "connected" : "disconnected",
+      time: dbResult.rows[0].time,
     });
-
   } catch (error) {
-
     console.error("Database connection error:", error);
-
+    const redisOk = await redisIsReady();
     res.status(500).json({
       ok: false,
       database: "disconnected",
-      error: error instanceof Error ? error.message : "Unknown error"
+      redis: redisOk ? "connected" : "disconnected",
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 });
@@ -57,29 +61,27 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // wait for i18next and database
-Promise.all([
-  i18nReady,
-  pool.query("SELECT 1")
-])
-.then(() => {
+Promise.all([i18nReady, pool.query("SELECT 1")])
+  .then(async () => {
+    console.log("✅ Database connection successful");
+    console.log("✅ i18next initialized successfully");
 
-  console.log("✅ Database connection successful");
-  console.log("✅ i18next initialized successfully");
+    const redisOk = await redisIsReady();
+    if (redisOk) {
+      console.log("✅ Redis connected");
+    } else {
+      console.warn("⚠️ Redis not available — caching disabled");
+    }
 
-  const PORT = process.env.PORT || 4000;
+    const PORT = process.env.PORT || 4000;
 
-  app.listen(PORT, () => {
-
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 Health check: http://localhost:${PORT}/health`);
-    console.log(`🔗 API: http://localhost:${PORT}/api`);
-
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔗 API: http://localhost:${PORT}/api`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ Failed to start server:", err);
+    process.exit(1);
   });
-
-})
-.catch(err => {
-
-  console.error("❌ Failed to start server:", err);
-  process.exit(1);
-
-});

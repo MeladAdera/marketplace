@@ -1,4 +1,5 @@
 import pool from "../../db/database";
+import { cacheDel, cacheDelPattern, cacheKeys } from "../cache.service";
 
 import {
   createProduct,
@@ -73,6 +74,9 @@ export async function createProductWithVariantsService(
     );
 
     await client.query("COMMIT");
+
+    await cacheDelPattern("product:list:*");
+    console.log("[CACHE] product list INVALIDATED — create");
 
     return {
       ...product,
@@ -208,6 +212,10 @@ export async function updateProductService(
 
     await client.query("COMMIT");
 
+    await cacheDel(cacheKeys.publicProduct(productId));
+    await cacheDelPattern("product:list:*");
+    console.log("[CACHE] product detail + list INVALIDATED — update");
+
     const variants = await findVariantsByProductId(productId);
 
     return {
@@ -268,6 +276,9 @@ export async function deleteProductService(
     );
 
     await client.query("COMMIT");
+
+    await cacheDel(cacheKeys.publicProduct(productId));
+    await cacheDelPattern("product:list:*");
 
   } catch (error) {
 

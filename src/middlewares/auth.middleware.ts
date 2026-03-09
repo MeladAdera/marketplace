@@ -2,7 +2,8 @@
 import { Request, Response, NextFunction } from "express";
 import pool from "../db/database";
 import { hashSessionToken } from "../utils/crypto";
-import { UserRole } from '../constants/permissions';
+import { UserRole } from "../constants/permissions";
+import { cacheGet, cacheSet, cacheKeys } from "../services/cache.service";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -13,23 +14,43 @@ export interface AuthRequest extends Request {
   };
 }
 
+const SESSION_CACHE_TTL = 60 * 30; // 30 min (matches session lifetime)
+const LAST_SEEN_INTERVAL_MS = 5 * 60 * 1000;
+
 export const authMiddleware = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // 1) Read raw cookie token
     const rawToken = req.cookies?.session_token;
 
     if (!rawToken) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    // 2) Hash it (because DB stores only hash)
     const tokenHash = hashSessionToken(rawToken);
+    const cacheKey = cacheKeys.session(tokenHash);
 
-    // 3) Find session + user
+    const cached = await cacheGet<{
+      user: AuthRequest["user"];
+      session_id: string;
+      last_seen_at: string;
+    }>(cacheKey);
+
+    if (cached) {
+      console.log("[CACHE] session HIT — user:", cached.user?.email);
+      req.user = cached.user;
+      const lastSeen = new Date(cached.last_seen_at).getTime();
+      if (Date.now() - lastSeen > LAST_SEEN_INTERVAL_MS) {
+        await pool.query(
+          "UPDATE sessions SET last_seen_at = NOW() WHERE id = $1",
+          [cached.session_id]
+        );
+      }
+      return next();
+    }
+
     const result = await pool.query(
       `
       SELECT
@@ -52,10 +73,11 @@ export const authMiddleware = async (
     const session = result.rows[0];
 
     if (!session) {
+      console.log("[CACHE] session MISS — invalid/expired token");
       return res.status(401).json({ message: "Invalid session" });
     }
 
-    // 4) Attach user to request
+    console.log("[CACHE] session MISS — fetched from DB, caching for:", session.email);
     req.user = {
       id: session.user_id,
       email: session.email,
@@ -63,19 +85,20 @@ export const authMiddleware = async (
       organization_id: session.organization_id,
     };
 
-    // 5) Update last_seen_at (only if old, to avoid DB spam)
-    // Update only once every 5 minutes
-    const lastSeen = new Date(session.last_seen_at).getTime();
-    const now = Date.now();
-    const FIVE_MINUTES = 5 * 60 * 1000;
+    await cacheSet(
+      cacheKey,
+      {
+        user: req.user,
+        session_id: session.session_id,
+        last_seen_at: session.last_seen_at,
+      },
+      SESSION_CACHE_TTL
+    );
 
-    if (now - lastSeen > FIVE_MINUTES) {
+    const lastSeen = new Date(session.last_seen_at).getTime();
+    if (Date.now() - lastSeen > LAST_SEEN_INTERVAL_MS) {
       await pool.query(
-        `
-        UPDATE sessions
-        SET last_seen_at = NOW()
-        WHERE id = $1
-        `,
+        "UPDATE sessions SET last_seen_at = NOW() WHERE id = $1",
         [session.session_id]
       );
     }

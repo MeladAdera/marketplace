@@ -5,6 +5,7 @@ import { loginService, signupService, refreshSession } from "./../services/auth.
 import { clearSessionCookie, setSessionCookie } from "../utils/cookies";
 import { hashSessionToken } from "../utils/crypto";
 import { revokeSessionByTokenHash, findSessionByTokenHash } from "../repository/sessions.repo";
+import { cacheDel, cacheKeys } from "../services/cache.service";
 import { AuthResponse } from "../types/auth.types";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { asyncHandler } from "../middlewares/errorHandler.middleware";
@@ -102,6 +103,8 @@ export const logoutController = asyncHandler(async (req: Request, res: Response)
   if (rawToken) {
     const tokenHash = hashSessionToken(rawToken);
     await revokeSessionByTokenHash(tokenHash);
+    await cacheDel(cacheKeys.session(tokenHash));
+    console.log("[CACHE] session INVALIDATED — logout");
   }
 
   return res.status(200).json({
@@ -152,6 +155,8 @@ export const refreshController = asyncHandler(async (req: Request, res: Response
   });
 
   await revokeSessionByTokenHash(tokenHash);
+  await cacheDel(cacheKeys.session(tokenHash));
+  console.log("[CACHE] session INVALIDATED — refresh (old token)");
   setSessionCookie(res, result.sessionToken, result.expiresAt);
 
   return res.status(200).json({

@@ -1,11 +1,21 @@
 // src/services/public.service.ts
-import { 
-  listPublicProducts, 
-  getPublicProductById 
+import crypto from "crypto";
+import {
+  listPublicProducts,
+  getPublicProductById,
 } from "../repository/public-products.repo";
-import { PublicProductFilters, PublicProductSummary, PublicProductDetail } from "../types/product.types";
-import { ProductNotFoundError } from "../errors/product.errors"; 
+import {
+  PublicProductFilters,
+  PublicProductSummary,
+  PublicProductDetail,
+} from "../types/product.types";
+import { ProductNotFoundError } from "../errors/product.errors";
 import { ValidationError } from "../errors/AppError";
+import { cacheGet, cacheSet, cacheKeys } from "./cache.service";
+
+function filtersHash(filters: PublicProductFilters): string {
+  return crypto.createHash("md5").update(JSON.stringify(filters)).digest("hex");
+}
 
 /**
  * Parse and validate public product filters from query params
@@ -47,15 +57,29 @@ export async function listPublicProductsService(query: any): Promise<{
     totalPages: number;
   };
 }> {
-  // 1️⃣ Parse & validate input
   const filters = parsePublicProductFilters(query);
+  const cacheKey = cacheKeys.publicProductList(filtersHash(filters));
 
-  // 2️⃣ Call repository
+  const cached = await cacheGet<{ products: PublicProductSummary[]; total: number }>(cacheKey);
+  if (cached) {
+    console.log("[CACHE] product list HIT — filters:", JSON.stringify(filters));
+    const totalPages = Math.ceil(cached.total / filters.limit);
+    return {
+      products: cached.products,
+      pagination: {
+        page: filters.page,
+        limit: filters.limit,
+        total: cached.total,
+        totalPages,
+      },
+    };
+  }
+
+  console.log("[CACHE] product list MISS — fetching from DB, filters:", JSON.stringify(filters));
   const { products, total } = await listPublicProducts(filters);
+  await cacheSet(cacheKey, { products, total }, 60 * 2); // 2 min TTL
 
-  // 3️⃣ Shape pagination response
   const totalPages = Math.ceil(total / filters.limit);
-
   return {
     products,
     pagination: {
@@ -80,14 +104,23 @@ export async function getPublicProductByIdService(
 
   if (!uuidRegex.test(productId)) {
     throw new ValidationError(
-      'validation.invalid_uuid',
-      { field: 'id' },
+      "validation.invalid_uuid",
+      { field: "id" },
       {
-        field: 'params.id',
-        code: 'invalid_string'
+        field: "params.id",
+        code: "invalid_string",
       }
     );
   }
+
+  const cacheKey = cacheKeys.publicProduct(productId);
+  const cached = await cacheGet<PublicProductDetail>(cacheKey);
+  if (cached) {
+    console.log("[CACHE] product detail HIT — id:", productId);
+    return cached;
+  }
+
+  console.log("[CACHE] product detail MISS — fetching from DB, id:", productId);
 
   const product = await getPublicProductById(productId);
 
@@ -95,5 +128,6 @@ export async function getPublicProductByIdService(
     throw new ProductNotFoundError(productId);
   }
 
+  await cacheSet(cacheKey, product, 60 * 10); // 10 min TTL
   return product;
 }
