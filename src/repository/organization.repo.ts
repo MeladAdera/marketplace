@@ -1,6 +1,11 @@
 // src/repository/organization.repo.ts
 import pool from "../db/database";
+import { PoolClient } from "pg";
 import { Organization, CreateOrganizationInput, UpdateOrganizationInput } from "../types/organization.types";
+
+function getDb(client?: PoolClient) {
+  return client ?? pool;
+}
 
 export async function createOrganization(input: CreateOrganizationInput): Promise<Organization> {
   const query = `
@@ -38,7 +43,8 @@ export async function createOrganization(input: CreateOrganizationInput): Promis
   return result.rows[0];  // ✅ مباشرة
 }
 
-export async function findOrganizationBySlug(slug: string): Promise<Organization | null> {
+export async function findOrganizationBySlug(slug: string, client?: PoolClient): Promise<Organization | null> {
+  const db = getDb(client);
   const query = `
     SELECT
       id,
@@ -52,11 +58,12 @@ export async function findOrganizationBySlug(slug: string): Promise<Organization
     LIMIT 1
   `;
 
-  const result = await pool.query<Organization>(query, [slug]);
-  return result.rows[0] || null;  // ✅ مباشرة
+  const result = await db.query<Organization>(query, [slug]);
+  return result.rows[0] || null;
 }
 
-export async function findOrganizationById(id: string): Promise<Organization | null> {
+export async function findOrganizationById(id: string, client?: PoolClient): Promise<Organization | null> {
+  const db = getDb(client);
   const query = `
     SELECT
       id,
@@ -70,14 +77,16 @@ export async function findOrganizationById(id: string): Promise<Organization | n
     LIMIT 1
   `;
 
-  const result = await pool.query<Organization>(query, [id]);
-  return result.rows[0] || null;  // ✅ مباشرة
+  const result = await db.query<Organization>(query, [id]);
+  return result.rows[0] || null;
 }
 
 export async function updateOrganization(
   id: string,
-  input: UpdateOrganizationInput
+  input: UpdateOrganizationInput,
+  client?: PoolClient
 ): Promise<Organization | null> {
+  const db = getDb(client);
   const updates: string[] = [];
   const values: any[] = [];
   let paramCounter = 1;
@@ -101,7 +110,7 @@ export async function updateOrganization(
   }
 
   if (updates.length === 0) {
-    return findOrganizationById(id);
+    return findOrganizationById(id, client);
   }
 
   updates.push(`updated_at = NOW()`);
@@ -120,6 +129,6 @@ export async function updateOrganization(
       updated_at
   `;
 
-  const result = await pool.query<Organization>(query, values);
-  return result.rows[0] || null;  // ✅ مباشرة
+  const result = await db.query<Organization>(query, values);
+  return result.rows[0] || null;
 }

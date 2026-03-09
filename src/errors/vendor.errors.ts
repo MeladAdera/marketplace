@@ -221,3 +221,76 @@ export class InvitationAlreadyAcceptedError extends AppError {
     );
   }
 }
+// =============================================================================
+// PLATFORM ADMIN - VENDOR MANAGEMENT ERRORS
+// =============================================================================
+
+/**
+ * Error: Vendor/Organization not found (alias for consistency)
+ */
+export class VendorNotFoundError extends AppError {
+  constructor(vendorId?: string) {
+    super(
+      vendorId 
+        ? `Vendor with ID ${vendorId} not found`
+        : 'Vendor not found',
+      404,                    // statusCode
+      'VENDOR_NOT_FOUND',     // ✅ errorCode (نمرره هنا مباشرة)
+      true,                   // isOperational
+      vendorId ? { vendorId } : undefined, // details
+      'vendor.not_found',     // ✅ translationKey (نمرره هنا مباشرة)
+      vendorId ? { vendorId } : undefined  // translationParams
+    );
+  }
+}
+
+/**
+ * Error: Vendor is already suspended
+ */
+export class VendorSuspendedError extends AppError {
+  constructor(organizationId: string) {
+    super(
+      `Vendor is currently suspended`,
+      400,
+      'VENDOR_ALREADY_SUSPENDED',
+      true,
+      { organizationId },
+      'vendor.already_suspended',
+      { organizationId }
+    );
+  }
+}
+
+/**
+ * Error: Vendor is not suspended (cannot activate)
+ */
+export class VendorAlreadyActiveError extends AppError {
+  constructor(organizationId: string) {
+    super(
+      `Vendor is not suspended, cannot activate`,
+      400,
+      'VENDOR_ALREADY_ACTIVE',
+      true,
+      { organizationId },
+      'vendor.already_active',
+      { organizationId }
+    );
+  }
+}
+
+/**
+ * Error: Vendor cannot be deleted (has active data)
+ */
+export class VendorDeleteProtectedError extends AppError {
+  constructor(reason: string, details?: Record<string, any>) {
+    super(
+      `Cannot delete vendor: ${reason}`,
+      409,
+      'VENDOR_DELETE_PROTECTED',
+      true,
+      { reason, ...details },
+      'vendor.delete_protected',
+      { reason }
+    );
+  }
+}

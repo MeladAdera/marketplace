@@ -36,3 +36,41 @@ export interface OrganizationFilters {
   page?: number;
   limit?: number;
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// ADMIN VIEW TYPES
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface OrganizationAdminListItem {
+  id: string;
+  name: string;
+  slug: string;
+  status: OrganizationStatus;
+  deleted_at: Date | null;
+  created_at: Date;
+  // Basic stats
+  product_count: number;
+  user_count: number;
+}
+
+export interface AdminVendorFilters {
+  page?: number;
+  limit?: number;
+  status?: OrganizationStatus | 'deleted'; // include soft-deleted in admin view
+  search?: string; // search by name or slug
+  sortBy?: 'created_at' | 'name' | 'status';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface SuspendVendorInput {
+  reason: string;
+  duration_hours?: number; // optional: auto-unblock after X hours
+}
+
+export interface ActivateVendorInput {
+  note?: string;
+}
+
+export interface DeleteVendorInput {
+  confirm: true; // safety: must be literal true
+}

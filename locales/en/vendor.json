@@ -34,5 +34,14 @@
   "cannot_block_last_admin": "Cannot block the last administrator in your organization",
   "cannot_change_own_role": "You cannot change your own role",
   "invite.invitation_already_exists": "An active invitation already exists for this email",
-  "invite.race_condition": "An invitation was just created by another request. Please refresh"
+  "invite.race_condition": "An invitation was just created by another request. Please refresh",
+
+  "✅ New keys for platform management": "",
+  "list_success": "Vendors list retrieved successfully",
+  "details_success": "Vendor details retrieved successfully",
+  "update_success": "Vendor updated successfully",
+  "suspended_success": "Vendor suspended successfully",
+  "activated_success": "Vendor activated successfully",
+  "deleted_success": "Vendor marked for deletion",
+  "restored_success": "Vendor restored successfully"
 }

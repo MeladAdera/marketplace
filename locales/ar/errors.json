@@ -58,6 +58,12 @@
     "price_too_big": "السعر مرتفع جداً",
     "invalid_type": "{{field}} يحتوي على نوع بيانات غير صالح",
     "required": "{{field}} حقل مطلوب",
-    "unrecognized_keys": "حقول غير معروفة: {{fields}}"
+    "unrecognized_keys": "حقول غير معروفة: {{fields}}",
+    
+    "✅ أخطاء إدارة المنصة": "",
+    "VENDOR_NOT_FOUND": "البائع غير موجود",
+    "VENDOR_ALREADY_SUSPENDED": "البائع موقوف بالفعل",
+    "VENDOR_ALREADY_ACTIVE": "البائع غير موقوف حالياً",
+    "VENDOR_DELETE_PROTECTED": "لا يمكن حذف البائع: {{reason}}"
   }
 }

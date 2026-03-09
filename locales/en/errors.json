@@ -59,7 +59,14 @@
     "price_too_big": "Price is too high",
     "invalid_type": "{{field}} has invalid type",
     "required": "{{field}} is required",
-    "unrecognized_keys": "Unknown fields provided: {{fields}}"
+    "unrecognized_keys": "Unknown fields provided: {{fields}}",
+
+
+    "✅ Platform admin errors": "",
+    "VENDOR_NOT_FOUND": "Vendor not found",
+    "VENDOR_ALREADY_SUSPENDED": "Vendor is already suspended",
+    "VENDOR_ALREADY_ACTIVE": "Vendor is not currently suspended",
+    "VENDOR_DELETE_PROTECTED": "Cannot delete vendor: {{reason}}"
   
 }
 }

@@ -12,7 +12,9 @@
     "db:setup": "npm run migrate",
     "db:reset": "docker-compose down -v && docker-compose up -d && sleep 5 && npm run migrate",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "admin:seed": "ts-node scripts/seed-platform-admin.ts"
+
   },
   "keywords": [],
   "author": "",

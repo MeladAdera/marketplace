@@ -7,6 +7,7 @@ import cartRoutes from "./cart.routes";
 import orderRoutes from "./order.routes";
 import ordervendorRoutes from "./vendor/order.routes"
 import adminRoutes from "./vendor/admin.routes"
+import platformAdminRoutes from "./platform-admin.routes";
 
 
 const router = Router();
@@ -19,6 +20,7 @@ router.use("/cart", cartRoutes);
 router.use("/orders", orderRoutes); 
 router.use("/vendor",ordervendorRoutes);   
 router.use("/vendor",adminRoutes);        
+router.use("/platform/admin", platformAdminRoutes);
 
 
 

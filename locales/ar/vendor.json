@@ -45,5 +45,14 @@
   "invite.user_already_active": "هذا المستخدم כבר عضو نشط في منظمتك",
   "invite.user_already_invited": "تمت دعوة هذا المستخدم من قبل ولم يقبل بعد",
   "invite.invitation_already_exists": "يوجد دعوة معلقة مسبقاً لهذا البريد",
-  "invite.race_condition": "تم إنشاء دعوة بواسطة طلب آخر. يرجى تحديث الصفحة"
+  "invite.race_condition": "تم إنشاء دعوة بواسطة طلب آخر. يرجى تحديث الصفحة",
+
+  "✅ مفاتيح جديدة لإدارة المنصة": "",
+  "list_success": "تم جلب قائمة البائعين بنجاح",
+  "details_success": "تم جلب تفاصيل البائع بنجاح",
+  "update_success": "تم تحديث معلومات البائع بنجاح",
+  "suspended_success": "تم إيقاف البائع بنجاح",
+  "activated_success": "تم تفعيل البائع بنجاح",
+  "deleted_success": "تم وضع البائع في حالة الحذف بنجاح",
+  "restored_success": "تم استعادة البائع بنجاح"
 }
